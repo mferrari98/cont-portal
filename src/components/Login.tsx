@@ -1,8 +1,20 @@
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Shield, Lock, User } from "lucide-react"
+
+const loginSchema = z.object({
+  username: z.string().min(1, "El usuario es requerido"),
+  password: z.string().min(1, "La contraseña es requerida")
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 interface LoginProps {
   onLogin: (username: string) => void
@@ -10,17 +22,21 @@ interface LoginProps {
 }
 
 export function Login({ onLogin, theme }: LoginProps) {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-
   const isDark = theme === 'dark'
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: ""
+    }
+  })
+
+  const onSubmit = (data: LoginFormData) => {
     setError("")
 
-    if (username === "admin" && password === "admin") {
+    if (data.username === "admin" && data.password === "admin") {
       onLogin("admin")
     } else {
       setError("Usuario o contraseña incorrectos")
@@ -32,12 +48,12 @@ export function Login({ onLogin, theme }: LoginProps) {
   }
 
   const themeClasses = {
-    bg: isDark ? 'bg-[#0d0d0d]' : 'bg-[#ffffff]',
-    bgCard: isDark ? 'bg-[#2e2f31]' : 'bg-[#ffffff]',
-    text: isDark ? 'text-[#ffffff]' : 'text-[#0d0d0d]',
-    textMuted: isDark ? 'text-[#6ccff6]' : 'text-[#0d0d0d]/60',
-    border: isDark ? 'border-[#ffffff]/20' : 'border-[#0d0d0d]/30',
-    inputBg: isDark ? 'bg-[#0d0d0d]' : 'bg-[#f5f5f5]'
+    bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
+    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FAF9F5]',
+    text: isDark ? 'text-[#FAF9F5]' : 'text-[#141413]',
+    textMuted: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
+    border: isDark ? 'border-[#FAF9F5]/20' : 'border-[#141413]/30',
+    inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]'
   }
 
   return (
@@ -70,63 +86,79 @@ export function Login({ onLogin, theme }: LoginProps) {
         {/* Login Card */}
         <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} animate-fade-in-up stagger-1 shadow-2xl`}>
           <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username */}
-            <div>
-              <label htmlFor="username" className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                Usuario
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className={`h-5 w-5 ${themeClasses.textMuted}`} />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Username */}
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`text-sm font-medium ${themeClasses.text}`}>
+                      Usuario
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className={`h-5 w-5 ${themeClasses.textMuted}`} />
+                        </div>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Ingresa tu usuario"
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:ring-2 focus:ring-[#6ccff6] focus:border-[#6ccff6] transition-all duration-200`}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Password */}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`text-sm font-medium ${themeClasses.text}`}>
+                      Contraseña
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Lock className={`h-5 w-5 ${themeClasses.textMuted}`} />
+                        </div>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Ingresa tu contraseña"
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:ring-2 focus:ring-[#6ccff6] focus:border-[#6ccff6] transition-all duration-200`}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Error Message */}
+              {error && (
+                <div className="px-4 py-3 rounded-lg bg-red-500/10 border-2 border-red-500 animate-fade-in">
+                  <p className="text-sm text-red-500 font-medium">{error}</p>
                 </div>
-                <input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className={`w-full pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:outline-none focus:ring-2 focus:ring-[#00a54f] focus:border-[#00a54f] transition-all duration-200`}
-                  placeholder="Ingresa tu usuario"
-                />
-              </div>
-            </div>
+              )}
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className={`h-5 w-5 ${themeClasses.textMuted}`} />
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:outline-none focus:ring-2 focus:ring-[#00a54f] focus:border-[#00a54f] transition-all duration-200`}
-                  placeholder="Ingresa tu contraseña"
-                />
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="px-4 py-3 rounded-lg bg-red-500/10 border-2 border-red-500 animate-fade-in">
-                <p className="text-sm text-red-500 font-medium">{error}</p>
-              </div>
-            )}
-
-            {/* Login Button */}
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full bg-[#00a54f] text-white font-semibold rounded-lg hover:bg-[#008f44] transition-all duration-200 hover:shadow-lg hover:shadow-[#00a54f]/30"
-            >
-              Iniciar sesión
-            </Button>
-          </form>
+              {/* Login Button */}
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200 hover:shadow-lg hover:shadow-[#6ccff6]/30"
+              >
+                Iniciar sesión
+              </Button>
+            </form>
+          </Form>
 
           {/* Divider */}
           <div className="my-6">

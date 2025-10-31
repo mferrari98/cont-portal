@@ -1,11 +1,12 @@
 import { Login } from "@/components/Login"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Moon,
   Sun,
@@ -76,9 +77,8 @@ function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [user, setUser] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [flippedCard, setFlippedCard] = useState<string | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const flipTimerRef = useRef<number | null>(null)
+  const [loadingService, setLoadingService] = useState<string | null>(null)
 
   useEffect(() => {
     const savedUser = localStorage.getItem('portal_user')
@@ -119,25 +119,15 @@ function App() {
     setShowLogoutDialog(false)
   }
 
-  const handleCardMouseEnter = (serviceId: string) => {
-    // Clear any existing timer
-    if (flipTimerRef.current) {
-      clearTimeout(flipTimerRef.current)
-    }
-    // Start 1.5-second timer
-    flipTimerRef.current = setTimeout(() => {
-      setFlippedCard(serviceId)
-    }, 1500)
-  }
-
-  const handleCardMouseLeave = () => {
-    // Clear timer if not flipped yet
-    if (flipTimerRef.current) {
-      clearTimeout(flipTimerRef.current)
-      flipTimerRef.current = null
-    }
-    // Unflip card if currently flipped
-    setFlippedCard(null)
+  
+  const handleServiceClick = (serviceId: string, url: string) => {
+    setLoadingService(serviceId)
+    // Navigate to the service
+    window.location.href = url
+    // Reset loading state after a timeout (in case navigation takes time)
+    setTimeout(() => {
+      setLoadingService(null)
+    }, 3000)
   }
 
   const services = user === 'admin' ? allServices : allServices.slice(0, 3)
@@ -147,46 +137,24 @@ function App() {
   if (!user) return <Login onLogin={handleLogin} theme={theme} />
 
   const themeClasses = {
-    bg: isDark ? 'bg-[#0d0d0d]' : 'bg-[#ffffff]',
-    bgCard: isDark ? 'bg-[#2e2f31]' : 'bg-[#ffffff]',
-    text: isDark ? 'text-[#ffffff]' : 'text-[#0d0d0d]',
-    textMuted: isDark ? 'text-[#ffffff]/70' : 'text-[#0d0d0d]/70',
-    textSubtle: isDark ? 'text-[#6ccff6]' : 'text-[#0d0d0d]/60',
-    textFaded: isDark ? 'text-[#ffffff]/50' : 'text-[#0d0d0d]/50',
-    border: isDark ? 'border-[#ffffff]/20' : 'border-[#0d0d0d]/30',
-    borderLight: isDark ? 'border-[#ffffff]/10' : 'border-[#0d0d0d]/20',
-    borderHover: isDark ? 'hover:border-[#00a54f]' : 'hover:border-[#00a54f]',
-    bgHover: isDark ? 'hover:bg-[#2e2f31]' : 'hover:bg-[#f5f5f5]',
-    iconBg: isDark ? 'bg-[#0d0d0d]' : 'bg-[#0d0d0d]/5',
-    inputBg: isDark ? 'bg-[#0d0d0d]' : 'bg-[#f5f5f5]',
-    accent: 'bg-[#00a54f]'
+    bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
+    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FAF9F5]',
+    text: isDark ? 'text-[#FAF9F5]' : 'text-[#141413]',
+    textMuted: isDark ? 'text-[#FAF9F5]/70' : 'text-[#141413]/70',
+    textSubtle: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
+    textFaded: isDark ? 'text-[#FAF9F5]/50' : 'text-[#141413]/50',
+    border: isDark ? 'border-[#FAF9F5]/20' : 'border-[#141413]/30',
+    borderLight: isDark ? 'border-[#FAF9F5]/10' : 'border-[#141413]/20',
+    borderHover: isDark ? 'hover:border-[#6ccff6]' : 'hover:border-[#1F1E1D]',
+    bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F5F4F0]',
+    iconBg: isDark ? 'bg-[#141413]' : 'bg-[#141413]/5',
+    inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]',
+    accent: 'bg-[#6ccff6]'
   }
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen ${themeClasses.bg} relative overflow-hidden`}>
-        {/* Mesh Gradient Background */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div
-            className="absolute top-[10%] left-[20%] w-[600px] h-[600px] rounded-full blur-[120px] opacity-20 mesh-gradient-1"
-            style={{
-              background: 'radial-gradient(circle, rgba(0,165,79,0.4) 0%, transparent 70%)'
-            }}
-          ></div>
-          <div
-            className="absolute bottom-[20%] right-[15%] w-[500px] h-[500px] rounded-full blur-[100px] opacity-15 mesh-gradient-2"
-            style={{
-              background: 'radial-gradient(circle, rgba(108,207,246,0.3) 0%, transparent 70%)'
-            }}
-          ></div>
-          <div
-            className="absolute top-[60%] left-[10%] w-[400px] h-[400px] rounded-full blur-[80px] opacity-10 mesh-gradient-1"
-            style={{
-              background: 'radial-gradient(circle, rgba(0,165,79,0.25) 0%, transparent 70%)',
-              animationDelay: '5s'
-            }}
-          ></div>
-        </div>
+      <div className={`min-h-screen ${themeClasses.bg} relative`}>
 
         {/* Top Bar */}
         <div className={`border-b ${themeClasses.borderLight} relative z-10 animate-fade-in`}>
@@ -261,62 +229,42 @@ function App() {
 
             {/* Services Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map((service, index) => {
-                const isFlipped = flippedCard === service.id
-                return (
-                  <div
-                    key={service.id}
-                    className={`flip-card ${isFlipped ? 'flipped' : ''} animate-fade-in-up stagger-${index + 1}`}
-                    onMouseEnter={() => handleCardMouseEnter(service.id)}
-                    onMouseLeave={handleCardMouseLeave}
+              {services.map((service, index) => (
+                <div
+                  key={service.id}
+                  className={`animate-fade-in-up stagger-${index + 1}`}
+                >
+                  <button
+                    onClick={() => handleServiceClick(service.id, service.url)}
+                    className="group block h-full w-full text-left"
+                    disabled={loadingService === service.id}
                   >
-                    <div className="flip-card-inner">
-                      {/* Front Face */}
-                      <div className="flip-card-front">
-                        <a href={service.url} className="group block h-full">
-                          <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-2xl hover:shadow-[#00a54f]/30 hover:-translate-y-1 h-full`}>
-                            <CardContent className="p-4 h-full min-h-[96px] flex items-center">
-                              <div className="flex items-start gap-3 w-full">
-                                <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#00a54f]`}>
-                                  <div className={`${themeClasses.text} transition-transform duration-300 group-hover:scale-110`}>
-                                    {service.icon}
-                                  </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 group-hover:text-[#00a54f]`}>
-                                    {service.name}
-                                  </h3>
-                                  <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
-                                    {service.desc}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </a>
-                      </div>
-
-                      {/* Back Face */}
-                      <div className="flip-card-back">
-                        <a href={service.url} className="block w-full h-full">
-                          <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} h-full`}>
-                            <CardContent className="p-4 h-full min-h-[96px] flex items-center justify-center">
-                              <p className={`text-sm ${themeClasses.textMuted} text-center leading-relaxed`}>
-                                {service.id === 'guardias' && 'Gestiona y consulta los turnos de guardia del personal'}
-                                {service.id === 'reportes' && 'Reporte de niveles de agua por sitio'}
-                                {service.id === 'dash' && 'Monitoreo de exemys en tiempo real'}
-                                {service.id === 'gis' && 'Explora mapas y datos geoespaciales'}
-                                {service.id === 'monitor' && 'Supervisa el estado y recursos del servidor'}
-                                {service.id === 'emp' && 'Administra información y gestión empresarial'}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+                    <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-2xl hover:shadow-[#6ccff6]/30 hover:-translate-y-1 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                      <CardContent className="p-4 h-full min-h-[96px] flex items-center">
+                        <div className="flex items-start gap-3 w-full">
+                          <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6]`}>
+                            <div className={`${themeClasses.text} transition-transform duration-300 group-hover:scale-110`}>
+                              {loadingService === service.id ? (
+                                <Spinner size="sm" />
+                              ) : (
+                                service.icon
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 group-hover:text-[#6ccff6]`}>
+                              {service.name}
+                            </h3>
+                            <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
+                              {loadingService === service.id ? 'Cargando...' : service.desc}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </button>
+                </div>
+              ))}
             </div>
 
             {/* Footer */}
