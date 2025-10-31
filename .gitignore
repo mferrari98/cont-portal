@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Documentation directories
+.serenamemories/
+openspec/
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
