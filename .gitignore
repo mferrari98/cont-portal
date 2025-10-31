@@ -16,6 +16,9 @@ dist-ssr
 .serenamemories/
 openspec/
 .claude/
+.serena/
+.mcp.json
+CLAUDE.md
 
 # Editor directories and files
 .vscode/*
