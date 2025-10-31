@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Shield, Lock, User } from "lucide-react"
@@ -106,11 +105,11 @@ export function Login({ onLogin, theme }: LoginProps) {
                           {...field}
                           type="text"
                           placeholder="Ingresa tu usuario"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:ring-2 focus:ring-[#6ccff6] focus:border-[#6ccff6] transition-all duration-200`}
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} transition-all duration-200`}
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`} />
                   </FormItem>
                 )}
               />
@@ -133,11 +132,11 @@ export function Login({ onLogin, theme }: LoginProps) {
                           {...field}
                           type="password"
                           placeholder="Ingresa tu contraseña"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} focus:ring-2 focus:ring-[#6ccff6] focus:border-[#6ccff6] transition-all duration-200`}
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} transition-all duration-200`}
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`} />
                   </FormItem>
                 )}
               />
@@ -153,7 +152,7 @@ export function Login({ onLogin, theme }: LoginProps) {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200 hover:shadow-lg hover:shadow-[#6ccff6]/30"
+                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200"
               >
                 Iniciar sesión
               </Button>
@@ -161,8 +160,10 @@ export function Login({ onLogin, theme }: LoginProps) {
           </Form>
 
           {/* Divider */}
-          <div className="my-6">
-            <Separator className="opacity-50" />
+          <div className="my-6 flex items-center gap-4">
+            <div className={`flex-1 h-px ${themeClasses.border}`}></div>
+            <span className={`text-sm font-medium ${themeClasses.textMuted}`}>o</span>
+            <div className={`flex-1 h-px ${themeClasses.border}`}></div>
           </div>
 
           {/* Guest Button */}

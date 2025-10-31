@@ -172,3 +172,92 @@ body {
   transform: rotateY(180deg);
 }
 
+/* Contour Animation for Service Cards */
+@keyframes contour-clockwise {
+  0% {
+    border-top-color: currentColor;
+    border-right-color: currentColor;
+    border-bottom-color: currentColor;
+    border-left-color: currentColor;
+  }
+  25% {
+    border-top-color: transparent;
+    border-right-color: currentColor;
+    border-bottom-color: currentColor;
+    border-left-color: currentColor;
+  }
+  50% {
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: currentColor;
+    border-left-color: currentColor;
+  }
+  75% {
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: currentColor;
+  }
+  90% {
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+  }
+  100% {
+    border-top-color: currentColor;
+    border-right-color: currentColor;
+    border-bottom-color: currentColor;
+    border-left-color: currentColor;
+  }
+}
+
+.contour-animation {
+  position: relative;
+}
+
+.contour-animation::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.contour-animation:hover::before {
+  opacity: 1;
+  animation: contour-clockwise 3s ease-in-out 2s forwards;
+}
+
+/* Dark theme support */
+.dark .contour-animation::before {
+  border-color: #6ccff6; /* Hover border color for dark theme */
+}
+
+/* Light theme support */
+.contour-animation::before {
+  border-color: #1F1E1D; /* Hover border color for light theme */
+}
+
+/* Accessibility: Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .contour-animation:hover::before {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Performance optimizations */
+.contour-animation::before {
+  will-change: opacity, border-color;
+  transform: translateZ(0); /* Force GPU acceleration */
+}
+
+.contour-animation:hover::before {
+  will-change: opacity, border-color, animation;
+}
+
