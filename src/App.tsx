@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import {
@@ -110,7 +109,14 @@ function App() {
   }
 
   const handleLogoutClick = () => {
-    setShowLogoutDialog(true)
+    if (user === 'invitado') {
+      // Direct logout for guest users
+      setUser(null)
+      localStorage.removeItem('portal_user')
+    } else {
+      // Show confirmation dialog for admin users
+      setShowLogoutDialog(true)
+    }
   }
 
   const handleLogoutConfirm = () => {
@@ -153,8 +159,7 @@ function App() {
   }
 
   return (
-    <TooltipProvider>
-      <div className={`min-h-screen ${themeClasses.bg} relative`}>
+    <div className={`min-h-screen ${themeClasses.bg} relative`}>
 
         {/* Top Bar */}
         <div className={`border-b ${themeClasses.borderLight} relative z-10 animate-fade-in`}>
@@ -176,38 +181,24 @@ function App() {
               </Badge>
 
               {/* Theme Toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={toggleTheme}
-                    variant="outline"
-                    size="icon"
-                    className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
-                  >
-                    {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Cambiar tema</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                onClick={toggleTheme}
+                variant="outline"
+                size="icon"
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+              >
+                {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              </Button>
 
               {/* Logout */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={handleLogoutClick}
-                    variant="outline"
-                    size="icon"
-                    className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Cerrar sesión</p>
-                </TooltipContent>
-              </Tooltip>
+              <Button
+                onClick={handleLogoutClick}
+                variant="outline"
+                size="icon"
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -239,7 +230,7 @@ function App() {
                     className="group block h-full w-full text-left"
                     disabled={loadingService === service.id}
                   >
-                    <Card className={`contour-animation border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-2xl hover:shadow-[#6ccff6]/30 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                    <Card className={`contour-animation border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
                       <CardContent className="p-4 h-full min-h-[96px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
                           <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6]`}>
@@ -304,7 +295,6 @@ function App() {
           </DialogContent>
         </Dialog>
       </div>
-    </TooltipProvider>
   )
 }
 

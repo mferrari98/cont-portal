@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Separator } from "@/components/ui/separator"
 import { Shield, Lock, User } from "lucide-react"
 
 const loginSchema = z.object({
@@ -71,20 +72,20 @@ export function Login({ onLogin, theme }: LoginProps) {
       <div className="w-full max-w-md relative z-10">
         {/* Logo/Header */}
         <div className="text-center mb-8 animate-fade-in-up">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-lg ${themeClasses.bgCard} border-2 ${themeClasses.border} mb-4 transition-all duration-300 hover:border-[#00a54f] hover:shadow-lg hover:shadow-[#00a54f]/30`}>
-            <Shield className={`w-8 h-8 ${themeClasses.text}`} />
+          <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg ${themeClasses.bgCard} border-2 ${themeClasses.border} mb-4`}>
+            <Shield className={`w-6 h-6 ${themeClasses.text}`} />
           </div>
-          <h1 className={`text-4xl font-bold tracking-tight ${themeClasses.text} mb-2`}>
+          <h1 className={`text-3xl font-medium tracking-tight ${themeClasses.text} mb-2`}>
             Portal de Servicios
           </h1>
-          <p className={`text-base ${themeClasses.textMuted}`}>
+          <p className={`text-sm ${themeClasses.textMuted}`}>
             Telecomunicaciones y Automatismos
           </p>
         </div>
 
         {/* Login Card */}
-        <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} animate-fade-in-up stagger-1 shadow-2xl`}>
-          <CardContent className="p-8">
+        <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} animate-fade-in-up stagger-1 shadow-md`}>
+          <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* Username */}
@@ -105,7 +106,7 @@ export function Login({ onLogin, theme }: LoginProps) {
                           {...field}
                           type="text"
                           placeholder="Ingresa tu usuario"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} transition-all duration-200`}
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border ${themeClasses.border} rounded-md ${themeClasses.text} placeholder:${themeClasses.textMuted}`}
                         />
                       </div>
                     </FormControl>
@@ -132,7 +133,7 @@ export function Login({ onLogin, theme }: LoginProps) {
                           {...field}
                           type="password"
                           placeholder="Ingresa tu contraseña"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border-2 ${themeClasses.border} rounded-lg ${themeClasses.text} placeholder:${themeClasses.textMuted} transition-all duration-200`}
+                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border ${themeClasses.border} rounded-md ${themeClasses.text} placeholder:${themeClasses.textMuted}`}
                         />
                       </div>
                     </FormControl>
@@ -160,11 +161,7 @@ export function Login({ onLogin, theme }: LoginProps) {
           </Form>
 
           {/* Divider */}
-          <div className="my-6 flex items-center gap-4">
-            <div className={`flex-1 h-px ${themeClasses.border}`}></div>
-            <span className={`text-sm font-medium ${themeClasses.textMuted}`}>o</span>
-            <div className={`flex-1 h-px ${themeClasses.border}`}></div>
-          </div>
+          <Separator className={`my-6 ${themeClasses.border}`} />
 
           {/* Guest Button */}
           <Button
