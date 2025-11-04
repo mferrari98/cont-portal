@@ -44,6 +44,19 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 151 100% 32%;
+    /* Gradient custom properties for dark theme */
+    --gradient-start: 250 8% 8%; /* #141413 */
+    --gradient-mid: 250 5% 4%;   /* #0a0a09 */
+    --gradient-end: 0 0% 0%;     /* #000000 */
+    --contour-color: 108 100% 96%; /* #6ccff6 */
+  }
+
+  :root:not(.dark) {
+    /* Gradient custom properties for light theme */
+    --gradient-start: 48 4% 98%; /* #FAF9F5 */
+    --gradient-mid: 48 2% 97%;   /* #f8f8f6 */
+    --gradient-end: 0 0% 100%;   /* #FFFFFF */
+    --contour-color: 210 4% 12%; /* #1F1E1D */
   }
 }
 
@@ -172,92 +185,140 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Contour Animation for Service Cards */
-@keyframes contour-clockwise {
-  0% {
-    border-top-color: currentColor;
-    border-right-color: currentColor;
-    border-bottom-color: currentColor;
-    border-left-color: currentColor;
-  }
-  25% {
-    border-top-color: transparent;
-    border-right-color: currentColor;
-    border-bottom-color: currentColor;
-    border-left-color: currentColor;
-  }
-  50% {
-    border-top-color: transparent;
-    border-right-color: transparent;
-    border-bottom-color: currentColor;
-    border-left-color: currentColor;
-  }
-  75% {
-    border-top-color: transparent;
-    border-right-color: transparent;
-    border-bottom-color: transparent;
-    border-left-color: currentColor;
-  }
-  90% {
-    border-top-color: transparent;
-    border-right-color: transparent;
-    border-bottom-color: transparent;
-    border-left-color: transparent;
-  }
-  100% {
-    border-top-color: currentColor;
-    border-right-color: currentColor;
-    border-bottom-color: currentColor;
-    border-left-color: currentColor;
-  }
-}
 
-.contour-animation {
+
+/*
+ * Gradient Background Implementation
+ *
+ * This section implements the theme-aware gradient background for the Services Portal.
+ * The gradient flows from north to south (top to bottom) using CSS custom properties
+ * defined in the theme section to ensure proper color coordination between themes.
+ *
+ * - Dark theme: Vertical gradient from #141413 (top) to #000000 (bottom)
+ * - Light theme: Vertical gradient from #FAF9F5 (top) to #FFFFFF (bottom)
+ */
+.gradient-background {
+  background: linear-gradient(180deg,
+    hsl(var(--gradient-start)) 0%,
+    hsl(var(--gradient-mid)) 50%,
+    hsl(var(--gradient-end)) 100%
+  );
   position: relative;
 }
 
-.contour-animation::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border: 2px solid;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 10;
-}
-
-.contour-animation:hover::before {
-  opacity: 1;
-  animation: contour-clockwise 3s ease-in-out 2s forwards;
-}
-
-/* Dark theme support */
-.dark .contour-animation::before {
-  border-color: #6ccff6; /* Hover border color for dark theme */
-}
-
-/* Light theme support */
-.contour-animation::before {
-  border-color: #1F1E1D; /* Hover border color for light theme */
-}
-
-/* Accessibility: Respect reduced motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .contour-animation:hover::before {
-    animation: none;
+/*
+ * Subtle gradient animation for visual interest
+ * Creates a breathing effect with 20-second cycles
+ * Respects user's reduced motion preferences
+ */
+@keyframes gradient-pulse {
+  0%, 100% {
     opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
   }
 }
 
-/* Performance optimizations */
-.contour-animation::before {
-  will-change: opacity, border-color;
-  transform: translateZ(0); /* Force GPU acceleration */
+.gradient-background-animate {
+  animation: gradient-pulse 20s ease-in-out infinite;
 }
 
-.contour-animation:hover::before {
-  will-change: opacity, border-color, animation;
+/*
+ * Progressive enhancement fallback
+ * Provides solid color background for browsers that don't support CSS gradients
+ */
+@supports not (background: linear-gradient(90deg, #fff, #000)) {
+  .gradient-background {
+    background-color: var(--background);
+  }
+}
+
+/*
+ * Accessibility Support for Reduced Motion Preferences
+ *
+ * This section ensures that users who prefer reduced motion experience
+ * a static version of the interface while maintaining visual functionality.
+ * - Disables gradient animation
+ * - Provides static dot position instead of animated traveling effect
+ */
+@media (prefers-reduced-motion: reduce) {
+  .gradient-background-animate {
+    animation: none;
+  }
+
+  .progressive-border-animation:hover::after {
+    animation: none;
+    opacity: 1;
+    /* Static positioning at top-left */
+    top: -4px;
+    left: -4px;
+  }
+}
+
+/*
+ * Progressive Border Animation for Service Cards
+ *
+ * This section implements a new traveling dot animation that replaces the previous
+ * contour animation. The animation creates a more visible and engaging hover effect.
+ *
+ * - 1.5 second delay before animation starts
+ * - 8px circular dot that travels clockwise along the border
+ * - 2.5 second duration for complete border circuit
+ * - Theme-aware colors using CSS custom properties
+ * - GPU accelerated for optimal performance
+ */
+.progressive-border-animation {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Border travel animation keyframes - clockwise movement */
+@keyframes border-travel-dot {
+  0% {
+    top: -4px;
+    left: -4px; /* Start at top-left corner */
+  }
+  25% {
+    top: -4px;
+    left: calc(100% + 4px); /* Move to top-right corner */
+  }
+  50% {
+    top: calc(100% + 4px);
+    left: calc(100% + 4px); /* Move to bottom-right corner */
+  }
+  75% {
+    top: calc(100% + 4px);
+    left: -4px; /* Move to bottom-left corner */
+  }
+  100% {
+    top: -4px;
+    left: -4px; /* Return to top-left corner */
+  }
+}
+
+/* Traveling dot pseudo-element */
+.progressive-border-animation::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--contour-color));
+  border-radius: 50%;
+  top: -4px;
+  left: -4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+  /* Performance optimizations */
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+
+/* Animation trigger with delay and infinite loop */
+.progressive-border-animation:hover::after {
+  opacity: 1;
+  animation: border-travel-dot 2.5s linear 1.5s infinite;
+  will-change: opacity, transform, animation;
 }
 
