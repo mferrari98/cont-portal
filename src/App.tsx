@@ -185,7 +185,7 @@ function App() {
                 onClick={toggleTheme}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 progressive-border-animation`}
               >
                 {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
@@ -195,7 +195,7 @@ function App() {
                 onClick={handleLogoutClick}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 progressive-border-animation`}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -281,13 +281,13 @@ function App() {
               <Button
                 variant="outline"
                 onClick={() => setShowLogoutDialog(false)}
-                className={`${themeClasses.border} ${themeClasses.text}`}
+                className={`${themeClasses.border} ${themeClasses.text} progressive-border-animation`}
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleLogoutConfirm}
-                className="bg-red-500 text-white hover:bg-red-600"
+                className="bg-red-500 text-white hover:bg-red-600 progressive-border-animation"
               >
                 Cerrar sesión
               </Button>

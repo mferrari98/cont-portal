@@ -153,7 +153,7 @@ export function Login({ onLogin, theme }: LoginProps) {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200"
+                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200 progressive-border-animation"
               >
                 Iniciar sesión
               </Button>
@@ -169,7 +169,7 @@ export function Login({ onLogin, theme }: LoginProps) {
             onClick={handleGuest}
             variant="outline"
             size="lg"
-            className={`w-full border-2 ${themeClasses.border} ${themeClasses.text} font-medium hover:border-[#6ccff6] hover:bg-[#6ccff6]/10 rounded-lg transition-all duration-200`}
+            className={`w-full border-2 ${themeClasses.border} ${themeClasses.text} font-medium hover:border-[#6ccff6] hover:bg-[#6ccff6]/10 rounded-lg transition-all duration-200 progressive-border-animation`}
           >
             Continuar como invitado
           </Button>

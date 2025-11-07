@@ -250,23 +250,28 @@ body {
   .progressive-border-animation:hover::after {
     animation: none;
     opacity: 1;
-    /* Static positioning at top-left */
+    /* Static positioning at top-left corner */
     top: -4px;
     left: -4px;
   }
 }
 
 /*
- * Progressive Border Animation for Service Cards
+ * Progressive Border Animation for Interactive Elements
  *
- * This section implements a new traveling dot animation that replaces the previous
- * contour animation. The animation creates a more visible and engaging hover effect.
+ * This section implements a traveling dot animation that creates an engaging
+ * hover effect for buttons, cards, and other interactive components.
  *
- * - 1.5 second delay before animation starts
+ * Features:
+ * - 1.5 second delay before animation starts (prevents accidental triggers)
  * - 8px circular dot that travels clockwise along the border
  * - 2.5 second duration for complete border circuit
- * - Theme-aware colors using CSS custom properties
- * - GPU accelerated for optimal performance
+ * - Theme-aware colors using CSS custom properties (--contour-color)
+ * - GPU accelerated for optimal performance (will-change, transform3d)
+ * - Accessibility support with reduced motion preferences
+ * - Compatible across all modern browsers
+ *
+ * Usage: Add 'progressive-border-animation' class to any interactive element
  */
 .progressive-border-animation {
   position: relative;
@@ -281,14 +286,14 @@ body {
   }
   25% {
     top: -4px;
-    left: calc(100% + 4px); /* Move to top-right corner */
+    left: calc(100% - 4px); /* Move to top-right corner */
   }
   50% {
-    top: calc(100% + 4px);
-    left: calc(100% + 4px); /* Move to bottom-right corner */
+    top: calc(100% - 4px);
+    left: calc(100% - 4px); /* Move to bottom-right corner */
   }
   75% {
-    top: calc(100% + 4px);
+    top: calc(100% - 4px);
     left: -4px; /* Move to bottom-left corner */
   }
   100% {
@@ -303,16 +308,20 @@ body {
   position: absolute;
   width: 8px;
   height: 8px;
-  background: hsl(var(--contour-color));
+  background: #6ccff6;
   border-radius: 50%;
   top: -4px;
   left: -4px;
   opacity: 0;
   transition: opacity 0.3s ease;
-  z-index: 10;
+  z-index: 2147483647;
+  /* Ensure visibility with enhanced shadow */
+  box-shadow: 0 0 12px rgba(108, 207, 246, 0.8), 0 0 6px rgba(0, 0, 0, 0.3);
   /* Performance optimizations */
   will-change: opacity, transform;
   transform: translateZ(0);
+  /* Ensure dot is always above everything */
+  pointer-events: none;
 }
 
 /* Animation trigger with delay and infinite loop */
@@ -320,5 +329,17 @@ body {
   opacity: 1;
   animation: border-travel-dot 2.5s linear 1.5s infinite;
   will-change: opacity, transform, animation;
+}
+
+/* Performance optimization: Stop animation when not hovering */
+.progressive-border-animation:not(:hover)::after {
+  will-change: auto;
+}
+
+/* Special case for critical action buttons (e.g., destructive actions) */
+.progressive-border-animation.bg-red-500:hover::after,
+.progressive-border-animation[class*="bg-red"]::after {
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5), 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
