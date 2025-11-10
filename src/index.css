@@ -206,23 +206,6 @@ body {
   position: relative;
 }
 
-/*
- * Subtle gradient animation for visual interest
- * Creates a breathing effect with 20-second cycles
- * Respects user's reduced motion preferences
- */
-@keyframes gradient-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.95;
-  }
-}
-
-.gradient-background-animate {
-  animation: gradient-pulse 20s ease-in-out infinite;
-}
 
 /*
  * Progressive enhancement fallback
@@ -234,21 +217,5 @@ body {
   }
 }
 
-/*
- * Accessibility Support for Reduced Motion Preferences
- *
- * This section ensures that users who prefer reduced motion experience
- * a static version of the interface while maintaining visual functionality.
- * - Disables gradient animation
-  */
-
-/*
- * Reduced motion support
- */
-@media (prefers-reduced-motion: reduce) {
-  .gradient-background-animate {
-    animation: none;
-  }
-}
 
 

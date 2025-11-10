@@ -159,7 +159,7 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen gradient-background gradient-background-animate relative`}>
+    <div className={`min-h-screen gradient-background relative`}>
 
         {/* Top Bar */}
         <div className={`border-b ${themeClasses.borderLight} relative z-10 animate-fade-in`}>
