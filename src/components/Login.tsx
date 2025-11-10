@@ -50,9 +50,9 @@ export function Login({ onLogin, theme }: LoginProps) {
   const themeClasses = {
     bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
     bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FAF9F5]',
-    text: isDark ? 'text-[#FAF9F5]' : 'text-[#141413]',
+    text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
     textMuted: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
-    border: isDark ? 'border-[#FAF9F5]/20' : 'border-[#141413]/30',
+    border: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
     inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]'
   }
 
@@ -153,7 +153,7 @@ export function Login({ onLogin, theme }: LoginProps) {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200 progressive-border-animation"
+                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-lg hover:bg-[#5ab8e8] transition-all duration-200"
               >
                 Iniciar sesión
               </Button>
@@ -169,7 +169,7 @@ export function Login({ onLogin, theme }: LoginProps) {
             onClick={handleGuest}
             variant="outline"
             size="lg"
-            className={`w-full border-2 ${themeClasses.border} ${themeClasses.text} font-medium hover:border-[#6ccff6] hover:bg-[#6ccff6]/10 rounded-lg transition-all duration-200 progressive-border-animation`}
+            className={`w-full border-2 ${themeClasses.border} ${themeClasses.text} font-medium hover:border-[#6ccff6] hover:bg-[#6ccff6]/10 rounded-lg transition-all duration-200`}
           >
             Continuar como invitado
           </Button>

@@ -145,15 +145,15 @@ function App() {
   const themeClasses = {
     bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
     bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FAF9F5]',
-    text: isDark ? 'text-[#FAF9F5]' : 'text-[#141413]',
-    textMuted: isDark ? 'text-[#FAF9F5]/70' : 'text-[#141413]/70',
+    text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
+    textMuted: isDark ? 'text-[#E5E4E0]/70' : 'text-[#141413]/70',
     textSubtle: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
-    textFaded: isDark ? 'text-[#FAF9F5]/50' : 'text-[#141413]/50',
-    border: isDark ? 'border-[#FAF9F5]/20' : 'border-[#141413]/30',
-    borderLight: isDark ? 'border-[#FAF9F5]/10' : 'border-[#141413]/20',
-    borderHover: isDark ? 'hover:border-[#6ccff6]' : 'hover:border-[#1F1E1D]',
+    textFaded: isDark ? 'text-[#E5E4E0]/50' : 'text-[#141413]/50',
+    border: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
+    borderLight: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
+    borderHover: isDark ? 'hover:border-[#6ccff6]' : 'hover:border-[#6ccff6]',
     bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F5F4F0]',
-    iconBg: isDark ? 'bg-[#141413]' : 'bg-[#141413]/5',
+    iconBg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
     inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]',
     accent: 'bg-[#6ccff6]'
   }
@@ -185,7 +185,7 @@ function App() {
                 onClick={toggleTheme}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 progressive-border-animation`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
               >
                 {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
@@ -195,7 +195,7 @@ function App() {
                 onClick={handleLogoutClick}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 progressive-border-animation`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -230,7 +230,7 @@ function App() {
                     className="group block h-full w-full text-left"
                     disabled={loadingService === service.id}
                   >
-                    <Card className={`progressive-border-animation border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                    <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
                       <CardContent className="p-4 h-full min-h-[96px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
                           <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6]`}>
@@ -281,13 +281,13 @@ function App() {
               <Button
                 variant="outline"
                 onClick={() => setShowLogoutDialog(false)}
-                className={`${themeClasses.border} ${themeClasses.text} progressive-border-animation`}
+                className={`${themeClasses.border} ${themeClasses.text}`}
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleLogoutConfirm}
-                className="bg-red-500 text-white hover:bg-red-600 progressive-border-animation"
+                className="bg-red-500 text-white hover:bg-red-600"
               >
                 Cerrar sesión
               </Button>
