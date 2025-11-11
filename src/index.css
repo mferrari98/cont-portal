@@ -67,14 +67,14 @@ body {
 }
 
 /* Animaciones de entrada */
-@keyframes fadeInUp {
+@keyframes slideInScale {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: scale(0.95) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -92,17 +92,17 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
+  animation: slideInScale 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
   opacity: 0;
 }
 
-/* Stagger effect para las cards */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-.stagger-5 { animation-delay: 0.5s; }
-.stagger-6 { animation-delay: 0.6s; }
+/* Stagger effect para las cards - más rápido */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
 
 /* Mesh Gradient Background */
 @keyframes mesh-movement {

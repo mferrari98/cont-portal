@@ -145,16 +145,16 @@ function App() {
 
   const themeClasses = {
     bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
-    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FAF9F5]',
+    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#E5E5E5]',
     text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
     textMuted: isDark ? 'text-[#E5E4E0]/70' : 'text-[#141413]/70',
     textSubtle: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
     textFaded: isDark ? 'text-[#E5E4E0]/50' : 'text-[#141413]/50',
     border: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
     borderLight: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
-    borderHover: isDark ? 'hover:border-[#6ccff6]' : 'hover:border-[#6ccff6]',
+    borderHover: '',
     bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F5F4F0]',
-    iconBg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
+    iconBg: isDark ? 'bg-[#141413]' : 'bg-white',
     inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]',
     accent: 'bg-[#6ccff6]'
   }
@@ -212,7 +212,7 @@ function App() {
               <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} typewriter inline-block whitespace-nowrap`}>
                 Portal de Servicios
               </h1>
-              <p className={`text-base mt-2 ${themeClasses.textSubtle} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
+              <p className={`text-base mt-2 ${isDark ? themeClasses.textSubtle : 'text-[#6ccff6]'} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
                 Centro de Control
               </p>
             </div>
@@ -231,11 +231,11 @@ function App() {
                     className="group block h-full w-full text-left"
                     disabled={loadingService === service.id}
                   >
-                    <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
-                      <CardContent className="p-4 h-full min-h-[96px] flex items-center">
+                    <Card className={`${themeClasses.bgCard} h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                      <CardContent className="p-4 h-full min-h-[77px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
-                          <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6]`}>
-                            <div className={`${themeClasses.text} transition-transform duration-300 group-hover:scale-110`}>
+                          <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
+                            <div className={`${themeClasses.text} ${service.id === 'dash' && !isDark ? 'text-[#6ccff6]' : ''} transition-transform duration-300 group-hover:scale-110`}>
                               {loadingService === service.id ? (
                                 <Spinner size="sm" />
                               ) : (
@@ -261,11 +261,6 @@ function App() {
 
             {/* Footer */}
             <Separator className="mt-8 mb-4 opacity-50 animate-fade-in" style={{ animationDelay: '0.8s' }} />
-            <div className="text-right animate-fade-in" style={{ animationDelay: '1s' }}>
-              <span className={`text-sm ${themeClasses.textFaded}`}>
-                Servicoop · 2025
-              </span>
-            </div>
           </div>
         </div>
 
