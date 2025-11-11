@@ -140,6 +140,7 @@ function App() {
   const isDark = theme === 'dark'
 
   if (isLoading) return null
+
   if (!user) return <Login onLogin={handleLogin} theme={theme} />
 
   const themeClasses = {
@@ -230,7 +231,7 @@ function App() {
                     className="group block h-full w-full text-left"
                     disabled={loadingService === service.id}
                   >
-                    <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative overflow-hidden ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                    <Card className={`border-2 ${themeClasses.border} ${themeClasses.bgCard} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
                       <CardContent className="p-4 h-full min-h-[96px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
                           <div className={`w-11 h-11 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6]`}>

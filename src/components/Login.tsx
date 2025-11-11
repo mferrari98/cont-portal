@@ -4,9 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
 import { Shield, Lock, User } from "lucide-react"
 
 const loginSchema = z.object({
@@ -53,7 +51,9 @@ export function Login({ onLogin, theme }: LoginProps) {
     text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
     textMuted: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
     border: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
-    inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]'
+    borderHover: 'hover:border-[#6ccff6]',
+    iconBg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
+    inputInnerBg: isDark ? 'bg-[#2A2A28]' : 'bg-[#FFFFFF]' // Más claro que la tarjeta para contraste
   }
 
   return (
@@ -94,21 +94,25 @@ export function Login({ onLogin, theme }: LoginProps) {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`text-sm font-medium ${themeClasses.text}`}>
+                    <FormLabel className={`text-sm font-medium ${themeClasses.text} mb-3 block`}>
                       Usuario
                     </FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <User className={`h-5 w-5 ${themeClasses.textMuted}`} />
-                        </div>
-                        <Input
-                          {...field}
-                          type="text"
-                          placeholder="Ingresa tu usuario"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border ${themeClasses.border} rounded-md ${themeClasses.text} placeholder:${themeClasses.textMuted}`}
-                        />
-                      </div>
+                      <Card className={`border-2 ${themeClasses.border} ${themeClasses.inputInnerBg} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-14`}>
+                        <CardContent className="p-0 h-full flex items-center">
+                          <div className="flex items-center gap-3 w-full">
+                            <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6] ml-3`}>
+                              <User className={`w-4 h-4 ${themeClasses.text} transition-transform duration-300 group-hover:scale-110`} />
+                            </div>
+                            <input
+                              {...field}
+                              type="text"
+                              placeholder="Ingresa tu usuario"
+                              className={`flex-1 bg-transparent border-none outline-none text-base ${themeClasses.text} placeholder:${themeClasses.textMuted} py-2 px-3`}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
                     </FormControl>
                     <FormMessage className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`} />
                   </FormItem>
@@ -121,21 +125,25 @@ export function Login({ onLogin, theme }: LoginProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={`text-sm font-medium ${themeClasses.text}`}>
+                    <FormLabel className={`text-sm font-medium ${themeClasses.text} mb-3 block`}>
                       Contraseña
                     </FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className={`h-5 w-5 ${themeClasses.textMuted}`} />
-                        </div>
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="Ingresa tu contraseña"
-                          className={`pl-11 pr-4 py-3 text-base ${themeClasses.inputBg} border ${themeClasses.border} rounded-md ${themeClasses.text} placeholder:${themeClasses.textMuted}`}
-                        />
-                      </div>
+                      <Card className={`border-2 ${themeClasses.border} ${themeClasses.inputInnerBg} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-14`}>
+                        <CardContent className="p-0 h-full flex items-center">
+                          <div className="flex items-center gap-3 w-full">
+                            <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} ${themeClasses.border} transition-all duration-300 group-hover:border-[#6ccff6] ml-3`}>
+                              <Lock className={`w-4 h-4 ${themeClasses.text} transition-transform duration-300 group-hover:scale-110`} />
+                            </div>
+                            <input
+                              {...field}
+                              type="password"
+                              placeholder="Ingresa tu contraseña"
+                              className={`flex-1 bg-transparent border-none outline-none text-base ${themeClasses.text} placeholder:${themeClasses.textMuted} py-2 px-3`}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
                     </FormControl>
                     <FormMessage className={`text-sm font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`} />
                   </FormItem>
@@ -160,19 +168,32 @@ export function Login({ onLogin, theme }: LoginProps) {
             </form>
           </Form>
 
-          {/* Divider */}
-          <Separator className={`my-6 ${themeClasses.border}`} />
+          {/* Custom Divider with "O" */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div
+                className="w-full h-0.5"
+                style={{
+                  backgroundColor: isDark ? '#2A2A28' : '#FFFFFF'
+                }}
+              ></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className={`px-4 ${themeClasses.bgCard} ${themeClasses.text} font-medium`}>O</span>
+            </div>
+          </div>
 
-          {/* Guest Button */}
-          <Button
-            type="button"
+          {/* Guest Button as Card */}
+          <Card
+            className={`border-2 ${themeClasses.border} ${themeClasses.inputInnerBg} ${themeClasses.borderHover} transition-all duration-300 hover:shadow-md hover:shadow-[#6ccff6]/8 h-14 cursor-pointer`}
             onClick={handleGuest}
-            variant="outline"
-            size="lg"
-            className={`w-full border-2 ${themeClasses.border} ${themeClasses.text} font-medium hover:border-[#6ccff6] hover:bg-[#6ccff6]/10 rounded-lg transition-all duration-200`}
           >
-            Continuar como invitado
-          </Button>
+            <CardContent className="p-0 h-full flex items-center justify-center">
+              <div className={`${themeClasses.text} font-medium text-base`}>
+                Continuar como invitado
+              </div>
+            </CardContent>
+          </Card>
           </CardContent>
         </Card>
 
