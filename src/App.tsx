@@ -97,10 +97,40 @@ function App() {
     }
   }, [theme])
 
+  // Escuchar cambios de tema desde otras pestañas/aplicaciones (sincronización con emp app)
+  useEffect(() => {
+    const handleThemeEvent = (e: any) => {
+      if (e.detail?.theme && ['light', 'dark'].includes(e.detail.theme)) {
+        setTheme(e.detail.theme)
+      }
+    }
+
+    // Escuchar evento personalizado
+    window.addEventListener('themeChanged', handleThemeEvent)
+
+    // También escuchar cambios en storage (de otras pestañas/aplicaciones)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'portal_theme' && e.newValue) {
+        setTheme(e.newValue as 'light' | 'dark')
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('themeChanged', handleThemeEvent)
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     localStorage.setItem('portal_theme', newTheme)
+    // Disparar evento para sincronizar otras pestañas/aplicaciones (ej: emp app)
+    window.dispatchEvent(new CustomEvent('themeChanged', {
+      detail: { theme: newTheme }
+    }))
   }
 
   const handleLogin = (username: string) => {
