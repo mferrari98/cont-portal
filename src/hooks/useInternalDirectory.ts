@@ -28,18 +28,39 @@ export function useInternalDirectory(): SearchState & {
       setIsLoading(true);
       setError(null);
 
+      console.log('Loading internal directory...');
+
       // Fetch Excel file
       const response = await fetch('/internos.xlsx');
       if (!response.ok) {
-        throw new Error('No se pudo cargar el directorio interno');
+        throw new Error(`HTTP ${response.status}: No se pudo cargar el directorio interno`);
       }
 
+      console.log('Excel file fetched successfully, size:', response.headers.get('content-length'));
+
       const arrayBuffer = await response.arrayBuffer();
+      console.log('ArrayBuffer created, size:', arrayBuffer.byteLength);
+
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('El archivo Excel está vacío');
+      }
+
       const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
+      console.log('Workbook loaded, sheets:', workbook.SheetNames);
+
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        throw new Error('El archivo Excel no tiene hojas de cálculo');
+      }
 
       // Get first worksheet
       const worksheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[worksheetName];
+
+      if (!worksheet) {
+        throw new Error(`No se encontró la hoja "${worksheetName}"`);
+      }
+
+      console.log('Worksheet loaded:', worksheetName);
 
       // Convert to JSON with raw values - more efficient
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
@@ -49,8 +70,16 @@ export function useInternalDirectory(): SearchState & {
         range: 'A1:E200' // Limit range for performance
       }) as (string | number)[][];
 
+      console.log('Data converted to JSON, rows:', rawData.length);
+
+      if (!rawData || rawData.length === 0) {
+        throw new Error('No se encontraron datos en el archivo Excel');
+      }
+
       // Process data into Personnel interface
       const processedData = processExcelData(rawData);
+      console.log('Data processed, personnel records:', processedData.length);
+
       setAllPersonnel(processedData);
       setDataLoaded(true);
 

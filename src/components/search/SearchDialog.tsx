@@ -146,7 +146,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
 
           {/* Search Results */}
           <div
-            className={`max-h-48 sm:max-h-80 overflow-y-auto custom-scrollbar ${themeClasses.border.includes('#1F1E1D') || themeClasses.border.includes('dark:border-gray-700') ? 'dark-scrollbar' : 'light-scrollbar'}`}
+            className={`max-h-48 sm:max-h-80 overflow-y-auto custom-scrollbar dark-scrollbar`}
           >
             <SearchResults
               groupedResults={groupedResults}

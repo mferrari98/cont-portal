@@ -121,7 +121,7 @@ export function SearchResults({
 
   return (
     <div
-      className={`space-y-2 custom-scrollbar ${themeClasses.border.includes('#1F1E1D') ? 'dark-scrollbar' : 'light-scrollbar'}`}
+      className={`space-y-2 custom-scrollbar dark-scrollbar`}
       role="region"
       aria-live="polite"
       aria-label="Resultados de búsqueda"
