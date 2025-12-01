@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
+import { SearchButton } from "@/components/search/SearchButton"
+import { SearchDialog } from "@/components/search/SearchDialog"
 import {
   Moon,
   Sun,
@@ -78,6 +80,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [loadingService, setLoadingService] = useState<string | null>(null)
+  const [showSearchDialog, setShowSearchDialog] = useState(false)
 
   useEffect(() => {
     const savedUser = localStorage.getItem('portal_user')
@@ -99,9 +102,10 @@ function App() {
 
   // Escuchar cambios de tema desde otras pestañas/aplicaciones (sincronización con emp app)
   useEffect(() => {
-    const handleThemeEvent = (e: any) => {
-      if (e.detail?.theme && ['light', 'dark'].includes(e.detail.theme)) {
-        setTheme(e.detail.theme)
+    const handleThemeEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ theme: 'light' | 'dark' }>
+      if (customEvent.detail?.theme && ['light', 'dark'].includes(customEvent.detail.theme)) {
+        setTheme(customEvent.detail.theme)
       }
     }
 
@@ -211,6 +215,12 @@ function App() {
                 {user === 'admin' ? 'Admin' : 'Invitado'}
               </Badge>
 
+              {/* Search Button */}
+              <SearchButton
+                onClick={() => setShowSearchDialog(true)}
+                themeClasses={themeClasses}
+              />
+
               {/* Theme Toggle */}
               <Button
                 onClick={toggleTheme}
@@ -239,7 +249,7 @@ function App() {
           <div className="max-w-5xl mx-auto">
             {/* Header */}
             <div className="mb-6 mt-8">
-              <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} typewriter inline-block whitespace-nowrap`}>
+              <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} animate-fade-in inline-block whitespace-nowrap`}>
                 Portal de Servicios
               </h1>
               <p className={`text-base mt-2 ${isDark ? themeClasses.textSubtle : 'text-[#6ccff6]'} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
@@ -320,6 +330,13 @@ function App() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Search Dialog */}
+        <SearchDialog
+          isOpen={showSearchDialog}
+          onClose={() => setShowSearchDialog(false)}
+          themeClasses={themeClasses}
+        />
       </div>
   )
 }

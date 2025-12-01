@@ -217,4 +217,48 @@ body {
   }
 }
 
+/*
+ * Custom scrollbar styles for search components
+ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+}
+
+.custom-scrollbar.dark-scrollbar {
+  scrollbar-color: #1F1E1D transparent;
+}
+
+.custom-scrollbar.light-scrollbar {
+  scrollbar-color: #666 transparent;
+}
+
+/* WebKit scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar.dark-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #1F1E1D;
+  border-radius: 4px;
+  border: 2px solid transparent;
+}
+
+.custom-scrollbar.light-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #666;
+  border-radius: 4px;
+  border: 2px solid transparent;
+}
+
+.custom-scrollbar.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #333;
+}
+
+.custom-scrollbar.light-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+
 
