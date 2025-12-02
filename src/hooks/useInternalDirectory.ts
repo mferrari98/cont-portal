@@ -1,6 +1,56 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
+
+/**
+ * Transform technical errors into user-friendly messages
+ * Maps different error types to appropriate Spanish messages
+ * Returns object with message and retryable status
+ */
+function transformErrorMessage(error: Error | unknown): { message: string; isRetryable: boolean } {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    // HTTP 404 - File not found (non-retryable)
+    if (message.includes('http 404') || message.includes('not found')) {
+      return { message: 'Error al cargar el directorio', isRetryable: false };
+    }
+
+    // File not available (non-retryable)
+    if (message.includes('no está disponible') || message.includes('archivo del directorio no está disponible')) {
+      return { message: 'Error al cargar el directorio', isRetryable: false };
+    }
+
+    // Network errors (retryable)
+    if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
+      return { message: 'Error de conexión al cargar el directorio', isRetryable: true };
+    }
+
+    // File corruption/parsing errors (non-retryable)
+    if (message.includes('xlsx') || message.includes('excel') || message.includes('parse') || message.includes('corrupt') ||
+        message.includes('invalid html') || message.includes('<table>')) {
+      return { message: 'Error al procesar el directorio', isRetryable: false };
+    }
+
+    // Empty file errors (non-retryable)
+    if (message.includes('vacío') || message.includes('empty')) {
+      return { message: 'El directorio está vacío', isRetryable: false };
+    }
+
+    // Generic Excel errors (non-retryable)
+    if (message.includes('hoja') || message.includes('sheet')) {
+      return { message: 'Error al procesar el directorio', isRetryable: false };
+    }
+
+    // Already user-friendly messages in Spanish
+    if (/^[¿áéíóúñü\s\w.,:¡!()-]+$/.test(error.message)) {
+      return { message: error.message, isRetryable: false };
+    }
+  }
+
+  // Fallback for unknown errors (non-retryable to prevent loops)
+  return { message: 'Error al cargar el directorio', isRetryable: false };
+}
 
 /**
  * Hook for managing internal directory data and search functionality
@@ -11,38 +61,75 @@ export function useInternalDirectory(): SearchState & {
   clearSearch: () => void;
   allPersonnel: Personnel[];
   loadData: () => Promise<void>;
+  isRetryableError: boolean;
 } {
   const [allPersonnel, setAllPersonnel] = useState<Personnel[]>([]);
   const [query, setQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
+  const [isRetryableError, setIsRetryableError] = useState<boolean>(true);
 
   // Load Excel data on demand (when first opened)
-  const loadData = async () => {
-    if (dataLoaded && allPersonnel.length > 0) {
-      return; // Data already loaded
+  const loadData = useCallback(async () => {
+    // Allow retry even if data was previously marked as loaded (in case of file changes)
+    // But skip if we're currently loading or have valid data
+    if (isLoading || (dataLoaded && allPersonnel.length > 0 && !error)) {
+      return; // Skip if already loading or have valid data
     }
 
     try {
       setIsLoading(true);
       setError(null);
+      setIsRetryableError(true); // Reset retryable state for new attempts
+      setDataLoaded(false); // Reset loaded state for fresh attempt
 
       console.log('Loading internal directory...');
 
       // Fetch Excel file
       const response = await fetch('/internos.xlsx');
+
+      // Check if response is successful
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: No se pudo cargar el directorio interno`);
       }
 
-      console.log('Excel file fetched successfully, size:', response.headers.get('content-length'));
+      // Check content type to ensure it's an Excel file, not HTML error page
+      const contentType = response.headers.get('content-type');
+      console.log('Content-Type received:', contentType);
+      console.log('Content-Length:', response.headers.get('content-length'));
+
+      // More flexible content-type checking
+      if (contentType && contentType.includes('text/html')) {
+        // If it's HTML, it's likely an error page
+        throw new Error('El archivo del directorio no está disponible');
+      }
+
+      // For now, allow any content-type that's not HTML, and let the Excel parsing handle validation
+      // This is more flexible and avoids issues with different server configurations
+
+      console.log('Excel file fetched successfully');
 
       const arrayBuffer = await response.arrayBuffer();
       console.log('ArrayBuffer created, size:', arrayBuffer.byteLength);
 
       if (arrayBuffer.byteLength === 0) {
         throw new Error('El archivo Excel está vacío');
+      }
+
+      // Additional validation: Check if the file looks like HTML error page
+      const textContent = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer.slice(0, 200));
+      console.log('First 200 chars of content:', textContent);
+
+      if (textContent.includes('<!DOCTYPE html>') ||
+          textContent.includes('<html') ||
+          textContent.includes('<HTML') ||
+          textContent.includes('404') ||
+          textContent.includes('Not Found') ||
+          textContent.includes('Cannot GET') ||
+          textContent.includes('<head>')) {
+        console.log('Detected HTML content, treating as error page');
+        throw new Error('El archivo del directorio no está disponible');
       }
 
       const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
@@ -84,13 +171,17 @@ export function useInternalDirectory(): SearchState & {
       setDataLoaded(true);
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      setError(errorMessage);
+      // Log full technical error for debugging
       console.error('Error loading internal directory:', err);
+
+      // Transform to user-friendly message and determine retryability
+      const { message: userFriendlyMessage, isRetryable } = transformErrorMessage(err);
+      setError(userFriendlyMessage);
+      setIsRetryableError(isRetryable);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isLoading, dataLoaded, allPersonnel.length, error]); // Dependencies for useCallback
 
   /**
    * Normalize text by removing accents and converting to lowercase
@@ -301,16 +392,16 @@ export function useInternalDirectory(): SearchState & {
   /**
    * Search function with debouncing handled by consumer
    */
-  const search = (newQuery: string) => {
+  const search = useCallback((newQuery: string) => {
     setQuery(newQuery);
-  };
+  }, []);
 
   /**
    * Clear search results
    */
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     setQuery('');
-  };
+  }, []);
 
   return {
     query,
@@ -321,6 +412,7 @@ export function useInternalDirectory(): SearchState & {
     search,
     clearSearch,
     allPersonnel,
-    loadData
+    loadData,
+    isRetryableError
   };
 }

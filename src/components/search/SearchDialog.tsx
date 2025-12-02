@@ -27,7 +27,8 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
     groupedResults,
     isLoading,
     error,
-    loadData
+    loadData,
+    isRetryableError
   } = useInternalDirectory();
 
   // Debounced search with 300ms delay
@@ -56,7 +57,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
   // Load data and focus input when dialog opens
   useEffect(() => {
     if (isOpen) {
-      // Load data when dialog opens (lazy loading)
+      // Load data when dialog opens (lazy loading) - only if not already loaded
       loadData();
 
       // Focus input after a small delay
@@ -64,7 +65,12 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen, loadData]);
+  }, [isOpen]); // Remove loadData from dependencies to prevent infinite loops
+
+  // Handle retry functionality
+  const handleRetry = () => {
+    loadData();
+  };
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -155,6 +161,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
               searchQuery={searchQuery}
               isSearching={isSearching}
               themeClasses={themeClasses}
+              onRetry={isRetryableError ? handleRetry : undefined}
             />
           </div>
         </div>

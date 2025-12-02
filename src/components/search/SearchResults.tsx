@@ -1,4 +1,4 @@
-import { Loader2, Users, AlertCircle } from 'lucide-react';
+import { Loader2, Users, AlertCircle, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 import type { DepartmentGroup } from '@/types/personnel';
 
@@ -26,6 +26,7 @@ interface SearchResultsProps {
     bg: string;
     textMuted?: string;
   };
+  onRetry?: () => void; // Optional retry function
 }
 
 /**
@@ -38,7 +39,8 @@ export function SearchResults({
   error,
   searchQuery,
   isSearching,
-  themeClasses
+  themeClasses,
+  onRetry
 }: SearchResultsProps) {
   // Loading state (only show during initial data loading)
   if (isLoading) {
@@ -67,11 +69,29 @@ export function SearchResults({
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4">
-        <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-red-500 mb-2 sm:mb-3" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} opacity-70 text-center`}>
-          Error al cargar el directorio: {error}
+      <div
+        className="flex flex-col items-center justify-center py-6 sm:py-8 px-4"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-red-500 mb-3 sm:mb-4" role="img" aria-label="Error" />
+        <p className={`text-sm sm:text-base ${themeClasses.text} text-center mb-3 sm:mb-4 font-medium`}>
+          {error}
         </p>
+        <p className={`text-xs sm:text-sm ${themeClasses.text} opacity-60 text-center mb-4 sm:mb-6`}>
+          No se pudo cargar el directorio de internos
+        </p>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className={`flex items-center gap-2 px-4 py-2 text-sm sm:text-base rounded-lg border ${themeClasses.border} ${themeClasses.text} ${themeClasses.bg} hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            aria-label="Reintentar cargar directorio"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Reintentar
+          </button>
+        )}
       </div>
     );
   }
