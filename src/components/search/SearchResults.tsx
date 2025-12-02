@@ -1,5 +1,9 @@
-import { Loader2, Users, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, Users, AlertCircle, RefreshCw, SearchIcon, Phone, Building } from 'lucide-react';
 import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { DepartmentGroup } from '@/types/personnel';
 
 /**
@@ -45,11 +49,19 @@ export function SearchResults({
   // Loading state (only show during initial data loading)
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-8">
-        <Loader2 className="h-8 w-8 sm:h-10 sm:w-10 animate-spin mb-2 sm:mb-3" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} opacity-70 text-center`}>
-          Cargando directorio interno...
-        </p>
+      <div className="space-y-4 p-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </Card>
+        ))}
       </div>
     );
   }
@@ -57,69 +69,73 @@ export function SearchResults({
   // Searching state (show spinner during search)
   if (isSearching) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-8">
-        <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin opacity-70 mb-2" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} opacity-50 text-center`}>
-          Buscando...
-        </p>
-      </div>
+      <Card className="p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+        <p className={`text-sm ${themeClasses.text} opacity-70`}>Buscando...</p>
+      </Card>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div
-        className="flex flex-col items-center justify-center py-6 sm:py-8 px-4"
-        role="alert"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-red-500 mb-3 sm:mb-4" role="img" aria-label="Error" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} text-center mb-3 sm:mb-4 font-medium`}>
-          {error}
-        </p>
-        <p className={`text-xs sm:text-sm ${themeClasses.text} opacity-60 text-center mb-4 sm:mb-6`}>
-          No se pudo cargar el directorio de internos
-        </p>
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            className={`flex items-center gap-2 px-4 py-2 text-sm sm:text-base rounded-lg border ${themeClasses.border} ${themeClasses.text} ${themeClasses.bg} hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-            aria-label="Reintentar cargar directorio"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Reintentar
-          </button>
-        )}
-      </div>
+      <Card className={`p-6 text-center ${themeClasses.bg} ${themeClasses.text} ${themeClasses.border}`} role="alert" aria-live="polite" aria-atomic="true">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/20">
+            <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <p className={`font-medium ${themeClasses.text} mb-1`}>{error}</p>
+            <p className={`text-sm ${themeClasses.text} opacity-60`}>
+              No se pudo cargar el directorio de internos
+            </p>
+          </div>
+          {onRetry && (
+            <Button onClick={onRetry} variant="outline" size="sm" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Reintentar
+            </Button>
+          )}
+        </div>
+      </Card>
     );
   }
 
   // Empty search state
   if (searchQuery.trim().length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4">
-        <Search className="h-10 w-10 sm:h-12 sm:w-12 opacity-30 mb-3" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} opacity-70 text-center`}>
-          Escriba un nombre para buscar en el directorio
-        </p>
-      </div>
+      <Card className="p-8 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/20">
+            <SearchIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className={`font-medium ${themeClasses.text} mb-1`}>Buscar en el Directorio</p>
+            <p className={`text-sm ${themeClasses.text} opacity-60`}>
+              Escriba un nombre, departamento o extensión para comenzar
+            </p>
+          </div>
+        </div>
+      </Card>
     );
   }
 
   // No results state (only show when not searching)
   if (groupedResults.length === 0 && searchQuery.trim().length >= 2 && !isSearching) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4">
-        <Users className="h-10 w-10 sm:h-12 sm:w-12 opacity-30 mb-3" />
-        <p className={`text-sm sm:text-base ${themeClasses.text} opacity-70 text-center`}>
-          No se encontraron resultados para "{searchQuery}"
-        </p>
-        <p className={`text-xs sm:text-sm ${themeClasses.text} opacity-50 mt-1 text-center`}>
-          Intente con otro nombre o número interno
-        </p>
-      </div>
+      <Card className="p-8 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800">
+            <Users className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          </div>
+          <div>
+            <p className={`font-medium ${themeClasses.text} mb-1`}>Sin Resultados</p>
+            <p className={`text-sm ${themeClasses.text} opacity-60`}>
+              No se encontraron contactos para "{searchQuery}"
+            </p>
+          </div>
+        </div>
+      </Card>
     );
   }
 
@@ -140,55 +156,41 @@ export function SearchResults({
   }, [groupedResults]);
 
   return (
-    <div
-      className={`space-y-2 custom-scrollbar dark-scrollbar`}
-      role="region"
-      aria-live="polite"
-      aria-label="Resultados de búsqueda"
-    >
-      {Object.entries(resultsByExtension).map(([extension, people]) => {
+    <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
+      {Object.entries(resultsByExtension).map(([extension, people], index) => {
         const typedPeople = people as typeof groupedResults[0]['personnel'];
         const department = typedPeople[0]?.department || 'Sector desconocido';
         const searchTerms = typedPeople[0]?.searchTerms || [];
 
-        // Debug log for problematic data
-        if (department.includes('externo') || extension.includes('externo')) {
-          console.log('DEBUG - Externo found:', { extension, department, people: typedPeople });
-        }
-
         // Skip problematic entries
         if (department === 'Sector sin identificar' || !department || department.trim() === '') {
-          console.log('DEBUG - Skipping invalid department:', { extension, department });
           return null;
         }
 
         return (
-          <ExtensionBlock
-            key={extension}
-            extension={extension}
-            department={department}
-            people={typedPeople}
-            searchTerms={searchTerms}
-            themeClasses={themeClasses}
-          />
+          <div key={extension}>
+            <ExtensionCard
+              extension={extension}
+              department={department}
+              people={typedPeople}
+              searchTerms={searchTerms}
+              themeClasses={themeClasses}
+            />
+            {/* Separator line between sectors - only add if not last item */}
+            {index < Object.keys(resultsByExtension).length - 1 && (
+              <div className="h-px bg-gray-300 dark:bg-gray-600 my-6 opacity-100"></div>
+            )}
+          </div>
         );
       }).filter(Boolean)}
-
-      {/* Results summary */}
-      {Object.keys(resultsByExtension).length > 0 && (
-        <div className={`text-xs sm:text-sm ${themeClasses.text} opacity-50 pt-2 border-t ${themeClasses.border} px-2`}
-             role="status" aria-atomic="true">
-          {Object.keys(resultsByExtension).length} interno{Object.keys(resultsByExtension).length === 1 ? '' : 's'} encontrado{Object.keys(resultsByExtension).length === 1 ? '' : 's'}
-        </div>
-      )}
     </div>
   );
 }
 
 /**
- * Extension block - shows single person or group based on context
+ * Extension Card - modern card showing extension details with shadcn components
  */
-function ExtensionBlock({
+function ExtensionCard({
   extension,
   department,
   people,
@@ -214,49 +216,56 @@ function ExtensionBlock({
 }) {
   const isSinglePerson = people.length === 1;
 
-  // Determine background color based on theme (lighter than current)
-  const getLighterBg = () => {
-    if (themeClasses.bg.includes('bg-white')) return 'bg-gray-50';
-    if (themeClasses.bg.includes('dark:bg-gray-900')) return 'dark:bg-gray-800';
-    if (themeClasses.bg.includes('bg-')) {
-      return themeClasses.bg.replace('bg-', 'bg-opacity-20 bg-');
-    }
-    return 'bg-opacity-20 bg-gray-200 dark:bg-opacity-20 dark:bg-gray-700';
-  };
-
   return (
-    <section
-      className={`border rounded-lg p-3 sm:p-4 ${themeClasses.border} ${getLighterBg()}`}
-      aria-labelledby={`extension-${extension}`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 pb-2 border-b ${themeClasses.border}">
-        <h3 id={`extension-${extension}`} className={`text-sm sm:text-base font-semibold ${themeClasses.text} truncate`}>
-          {department}
-        </h3>
-        <span className={`text-base sm:text-lg font-bold font-mono px-3 py-1 rounded-md bg-yellow-400 text-gray-900 dark:bg-yellow-500 dark:text-gray-900 shadow-md`}>
-          {extension}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className={`flex items-center justify-between p-3 rounded-md transition-colors ${getLighterBg()} hover:bg-opacity-30`}>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm sm:text-base ${themeClasses.text} break-words leading-snug`}>
-            {isSinglePerson ? (
-              highlightText(normalizeName(people[0].name), searchTerms)
-            ) : (
-              people.map((person, index) => (
-                <span key={person.id}>
-                  {index > 0 && <span className={`${themeClasses.textMuted} mx-1`}>,</span>}
-                  {highlightText(normalizeName(person.name), searchTerms)}
-                </span>
-              ))
-            )}
-          </p>
+    <Card className={`transition-all duration-200 hover:shadow-md ${themeClasses.border} ${themeClasses.bg}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Building className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <CardTitle className={`text-base font-semibold ${themeClasses.text} truncate leading-tight`}>
+                {department}
+              </CardTitle>
+              <p className={`text-xs ${themeClasses.text} opacity-60 mt-1`}>
+                {people.length} contacto{people.length === 1 ? '' : 's'}
+              </p>
+            </div>
+          </div>
+          <div className="font-mono text-sm px-3 py-1.5 shadow-sm border-2 border-yellow-300 dark:border-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 font-bold rounded-md">
+            {extension}
+          </div>
         </div>
-      </div>
-    </section>
+      </CardHeader>
+
+      <CardContent className="pt-0">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 rounded-full bg-muted/50">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className={`text-base font-medium ${themeClasses.text} break-words leading-relaxed`}>
+              {isSinglePerson ? (
+                highlightText(normalizeName(people[0].name), searchTerms)
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {people.map((person) => (
+                    <Badge
+                      key={person.id}
+                      variant="secondary"
+                      className="text-sm px-2.5 py-1 font-medium"
+                    >
+                      {highlightText(normalizeName(person.name), searchTerms)}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -289,7 +298,3 @@ function highlightText(text: string, searchTerms: string[] = []) {
     </span>
   );
 }
-
-
-// Import Search icon for the empty state
-import { Search } from 'lucide-react';
