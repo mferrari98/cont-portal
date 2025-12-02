@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import * as XLSX from 'xlsx';
+import { cachedNormalizeText } from '@/lib/normalize';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
 
 /**
@@ -84,8 +85,6 @@ export function useInternalDirectory(): SearchState & {
       setIsRetryableError(true); // Reset retryable state for new attempts
       setDataLoaded(false); // Reset loaded state for fresh attempt
 
-      console.log('Loading internal directory...');
-
       // Fetch Excel file
       const response = await fetch('/internos.xlsx');
 
@@ -96,8 +95,6 @@ export function useInternalDirectory(): SearchState & {
 
       // Check content type to ensure it's an Excel file, not HTML error page
       const contentType = response.headers.get('content-type');
-      console.log('Content-Type received:', contentType);
-      console.log('Content-Length:', response.headers.get('content-length'));
 
       // More flexible content-type checking
       if (contentType && contentType.includes('text/html')) {
@@ -105,13 +102,7 @@ export function useInternalDirectory(): SearchState & {
         throw new Error('El archivo del directorio no está disponible');
       }
 
-      // For now, allow any content-type that's not HTML, and let the Excel parsing handle validation
-      // This is more flexible and avoids issues with different server configurations
-
-      console.log('Excel file fetched successfully');
-
       const arrayBuffer = await response.arrayBuffer();
-      console.log('ArrayBuffer created, size:', arrayBuffer.byteLength);
 
       if (arrayBuffer.byteLength === 0) {
         throw new Error('El archivo Excel está vacío');
@@ -119,7 +110,6 @@ export function useInternalDirectory(): SearchState & {
 
       // Additional validation: Check if the file looks like HTML error page
       const textContent = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer.slice(0, 200));
-      console.log('First 200 chars of content:', textContent);
 
       if (textContent.includes('<!DOCTYPE html>') ||
           textContent.includes('<html') ||
@@ -128,12 +118,10 @@ export function useInternalDirectory(): SearchState & {
           textContent.includes('Not Found') ||
           textContent.includes('Cannot GET') ||
           textContent.includes('<head>')) {
-        console.log('Detected HTML content, treating as error page');
         throw new Error('El archivo del directorio no está disponible');
       }
 
       const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
-      console.log('Workbook loaded, sheets:', workbook.SheetNames);
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
         throw new Error('El archivo Excel no tiene hojas de cálculo');
@@ -147,8 +135,6 @@ export function useInternalDirectory(): SearchState & {
         throw new Error(`No se encontró la hoja "${worksheetName}"`);
       }
 
-      console.log('Worksheet loaded:', worksheetName);
-
       // Convert to JSON with raw values - more efficient
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
@@ -157,23 +143,17 @@ export function useInternalDirectory(): SearchState & {
         range: 'A1:E200' // Limit range for performance
       }) as (string | number)[][];
 
-      console.log('Data converted to JSON, rows:', rawData.length);
-
       if (!rawData || rawData.length === 0) {
         throw new Error('No se encontraron datos en el archivo Excel');
       }
 
       // Process data into Personnel interface
       const processedData = processExcelData(rawData);
-      console.log('Data processed, personnel records:', processedData.length);
 
       setAllPersonnel(processedData);
       setDataLoaded(true);
 
     } catch (err) {
-      // Log full technical error for debugging
-      console.error('Error loading internal directory:', err);
-
       // Transform to user-friendly message and determine retryability
       const { message: userFriendlyMessage, isRetryable } = transformErrorMessage(err);
       setError(userFriendlyMessage);
@@ -181,22 +161,9 @@ export function useInternalDirectory(): SearchState & {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, dataLoaded, allPersonnel.length, error]); // Dependencies for useCallback
+  }, [isLoading, dataLoaded, error]); // Removed allPersonnel.length to prevent memory leak
 
-  /**
-   * Normalize text by removing accents and converting to lowercase
-   * This allows searching without tildes: 'á' becomes 'a', 'é' becomes 'e', etc.
-   */
-  const normalizeText = (text: string): string => {
-    return text
-      .toLowerCase()
-      .normalize('NFD') // Decompose accented characters
-      .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
-      .replace(/[,\s-]+/g, ' ')
-      .replace(/[^\w\s]/g, '') // Remove special characters except accents (which were already removed)
-      .trim();
-  };
-
+  
   /**
    * Process raw Excel data into Personnel records
    * Enhanced processing for better data extraction
@@ -224,16 +191,11 @@ export function useInternalDirectory(): SearchState & {
       if (colA.includes('TELÉFONOS INTERNOS RESERVA') ||
           colA.includes('RESERVA 6000') ||
           colD.includes('TELÉFONOS INTERNOS RESERVA')) {
-        console.log(`STOP: Found reservation section at row ${i}, stopping processing`);
-        stopProcessing = true;
+                stopProcessing = true;
         break;
       }
 
-      // Debug all non-empty rows for first 50 and any "Redes"
-      if (i < 50 || colC.toLowerCase().includes('redes') || colD.toLowerCase().includes('redes')) {
-        console.log(`ROW ${i}: [A:${colA}|B:${colB}|C:${colC}|D:${colD}|E:${colE}]`);
-      }
-
+      
       // Skip if this is an empty row or header row
       if (!colA && !colB && !colC && !colD && !colE) continue;
 
@@ -258,18 +220,7 @@ export function useInternalDirectory(): SearchState & {
         // Use Sector (Column D) as the department name
         const department = colD || 'Sector sin identificar';
 
-        // Debug log for any "Redes" related data
-        if (department.toLowerCase().includes('redes') ||
-            names.some(name => name.toLowerCase().includes('redes'))) {
-          console.log('REDES DEBUG - Found:', {
-            row: i,
-            department,
-            names,
-            extension,
-            colA, colB, colC, colD, colE
-          });
-        }
-
+        
         // Filter out unwanted content
         const filteredNames = names.filter(name =>
           name &&
@@ -287,7 +238,7 @@ export function useInternalDirectory(): SearchState & {
             name: name,
             department: department,
             extension: extension,
-            searchableName: normalizeText(name),
+            searchableName: cachedNormalizeText(name),
             searchableExtension: extension.toLowerCase()
           };
 
@@ -326,7 +277,7 @@ export function useInternalDirectory(): SearchState & {
       return [];
     }
 
-    const normalizedQuery = normalizeText(query.trim());
+    const normalizedQuery = cachedNormalizeText(query.trim());
     const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 0);
     const isNumericQuery = /^\d+$/.test(normalizedQuery);
 
@@ -339,9 +290,9 @@ export function useInternalDirectory(): SearchState & {
       );
     } else {
       // Check if this is a sector search (query matches a department name)
-      const normalizedDepartmentQuery = normalizeText(query.trim());
+      const normalizedDepartmentQuery = cachedNormalizeText(query.trim());
       const sectorMatches = allPersonnel.filter(person =>
-        normalizeText(person.department).includes(normalizedDepartmentQuery)
+        cachedNormalizeText(person.department).includes(normalizedDepartmentQuery)
       );
 
       if (sectorMatches.length > 0 && searchTerms.length === 1) {

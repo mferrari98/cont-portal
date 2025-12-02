@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Users, RefreshCw, X, Building } from 'lucide-react';
 import { SearchResults } from './SearchResults';
 import { useInternalDirectory } from '@/hooks/useInternalDirectory';
+import { cachedNormalizeText } from '@/lib/normalize';
 import type { DepartmentGroup } from '@/types/personnel';
 
 interface SearchDialogProps {
@@ -35,9 +36,11 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
     isRetryableError
   } = useInternalDirectory();
 
-  // Debounced search with 300ms delay
+  // Optimized debounced search with 300ms delay
   useEffect(() => {
-    if (searchQuery.trim().length < 2) {
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery.length < 2) {
       search('');
       setIsSearching(false);
       return;
@@ -46,17 +49,15 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
     setIsSearching(true);
     const timer = setTimeout(() => {
       search(searchQuery);
-      // Give a small delay for results to be processed, then stop searching
-      setTimeout(() => {
-        setIsSearching(false);
-      }, 100);
+      // Minimal delay for UI feedback
+      setIsSearching(false);
     }, 300);
 
     return () => {
       clearTimeout(timer);
       setIsSearching(false);
     };
-  }, [searchQuery]);
+  }, [searchQuery, search]); // Include search function dependency
 
   // Load data and focus input when dialog opens
   useEffect(() => {
@@ -97,32 +98,21 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
     }, 0);
   };
 
-  // Copy of normalizeText function from useInternalDirectory for consistent counting
-  const normalizeText = (text: string): string => {
-    return text
-      .toLowerCase()
-      .normalize('NFD') // Decompose accented characters
-      .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
-      .replace(/[,\s-]+/g, ' ')
-      .replace(/[^\w\s]/g, '') // Remove special characters except accents (which were already removed)
-      .trim();
-  };
-
-  // Count word appearances using same normalization as search algorithm
-  const countWordAppearances = (query: string, groupedResults: DepartmentGroup[]): number => {
+  // Count word appearances using cached normalization for performance
+  const countWordAppearances = useCallback((query: string, groupedResults: DepartmentGroup[]): number => {
     if (!query || query.length < 2) return 0;
-    const normalizedQuery = normalizeText(query.trim());
+    const normalizedQuery = cachedNormalizeText(query.trim());
 
     return groupedResults.reduce((total, dept) => {
       return total + dept.personnel.reduce((deptTotal: number, person: { name: string }) => {
         // Count occurrences in the normalized searchable name
-        const searchableName = normalizeText(person.name);
+        const searchableName = cachedNormalizeText(person.name);
         const regex = new RegExp(normalizedQuery, 'gi');
         const matches = searchableName.match(regex);
         return deptTotal + (matches ? matches.length : 0);
       }, 0);
     }, 0);
-  };
+  }, []); // Memoized function with no dependencies
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {

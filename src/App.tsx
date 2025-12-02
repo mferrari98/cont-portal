@@ -1,5 +1,6 @@
 import { Login } from "@/components/Login"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useThemeClasses } from "@/lib/useThemeClasses"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -170,28 +171,18 @@ function App() {
     }, 3000)
   }
 
-  const services = user === 'admin' ? allServices : allServices.slice(0, 3)
+  const services = useMemo(() =>
+    user === 'admin' ? allServices : allServices.slice(0, 3),
+    [user]
+  )
   const isDark = theme === 'dark'
+
+  // Los hooks deben ser llamados siempre, antes de cualquier return condicional
+  const themeClasses = useThemeClasses(theme)
 
   if (isLoading) return null
 
   if (!user) return <Login onLogin={handleLogin} theme={theme} />
-
-  const themeClasses = {
-    bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
-    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#E5E5E5]',
-    text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
-    textMuted: isDark ? 'text-[#E5E4E0]/70' : 'text-[#141413]/70',
-    textSubtle: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
-    textFaded: isDark ? 'text-[#E5E4E0]/50' : 'text-[#141413]/50',
-    border: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
-    borderLight: isDark ? 'border-[#1F1E1D]' : 'border-[#F5F4F0]',
-    borderHover: '',
-    bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F5F4F0]',
-    iconBg: isDark ? 'bg-[#141413]' : 'bg-white',
-    inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]',
-    accent: 'bg-[#6ccff6]'
-  }
 
   return (
     <div className={`min-h-screen gradient-background relative`}>
