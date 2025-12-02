@@ -217,7 +217,7 @@ function ExtensionCard({
   const isSinglePerson = people.length === 1;
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${themeClasses.border} ${themeClasses.bg}`}>
+    <Card className={`${themeClasses.border} ${themeClasses.bg}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -233,8 +233,8 @@ function ExtensionCard({
               </p>
             </div>
           </div>
-          <div className="font-mono text-sm px-3 py-1.5 shadow-sm border-2 border-yellow-300 dark:border-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 font-bold rounded-md">
-            {extension}
+          <div className={`font-mono text-base px-3 py-1.5 bg-yellow-100 dark:bg-yellow-500 text-yellow-700 dark:text-black font-semibold rounded-md`}>
+            <span className="opacity-70">int.</span> {extension}
           </div>
         </div>
       </CardHeader>
