@@ -157,24 +157,28 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
           Diálogo para buscar contactos del directorio interno por nombre o número interno
         </DialogDescription>
 
-        {/* Header */}
+        {/* Corporate Header */}
         <div className="p-6 pb-4">
-          <div className="flex items-center gap-3 text-xl mb-2">
-            <div className={`p-2 rounded-lg ${themeClasses.bg.includes('dark') ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
-              <Search className="h-5 w-5 text-blue-600" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
+              <Search className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </div>
-            <span className="font-semibold">Búsqueda de Directorio Interno</span>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Directorio Interno
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Busque personal por nombre, departamento o extensión
+              </p>
+            </div>
           </div>
-          <p className={`text-sm ${themeClasses.text} opacity-70`}>
-            Busca contactos por nombre, departamento o número de extensión
-          </p>
         </div>
 
         {/* Search Input Section */}
         <div className="px-6 pb-6 space-y-4">
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2">
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 text-gray-400" />
             </div>
             <Input
               ref={inputRef}
@@ -182,8 +186,16 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
               placeholder="Buscar por nombre, departamento o extensión..."
               value={searchQuery}
               onChange={handleInputChange}
-              className={`pl-10 pr-12 text-base h-11 ${themeClasses.border} ${themeClasses.text} ${themeClasses.bg}`}
-              aria-label="Buscar contacto por nombre o número interno"
+              className={`
+                pl-10 pr-10 h-10
+                border ${themeClasses.border}
+                ${themeClasses.bgCard}
+                ${themeClasses.text}
+                placeholder:text-muted-foreground
+                focus:ring-2 focus:ring-ring focus:border-ring
+                hover:border-muted-foreground
+              `}
+              aria-label="Buscar personal por nombre o número interno"
               autoComplete="off"
               spellCheck={false}
               role="searchbox"
@@ -192,30 +204,31 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-muted transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 aria-label="Limpiar búsqueda"
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
 
-          {/* Quick Stats - Shows word appearances and sectors */}
+          {/* Search Results Summary */}
           {!isLoading && !error && searchQuery.length >= 2 && groupedResults.length > 0 && (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{countWordAppearances(searchQuery, groupedResults)} aparicion{countWordAppearances(searchQuery, groupedResults) === 1 ? '' : 'es'}</span>
+                <span>{countWordAppearances(searchQuery, groupedResults)} resultado{countWordAppearances(searchQuery, groupedResults) === 1 ? '' : 's'}</span>
               </div>
+              <span>•</span>
               <div className="flex items-center gap-1">
                 <Building className="h-4 w-4" />
-                <span>{groupedResults.length} sector{groupedResults.length === 1 ? '' : 'es'}</span>
+                <span>{groupedResults.length} departamento{groupedResults.length === 1 ? '' : 's'}</span>
               </div>
             </div>
           )}
 
-          {/* Search Results */}
-          <ScrollArea className={`h-64 sm:h-80 pr-4 ${themeClasses.text}`}>
+          {/* Search Results Container */}
+          <ScrollArea className={`h-64 sm:h-80 pr-2 ${themeClasses.text}`}>
             <SearchResults
               groupedResults={groupedResults}
               isLoading={isLoading}
@@ -227,17 +240,18 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
             />
           </ScrollArea>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-4 border-t ${themeClasses.border}">
-            <p className={`text-xs ${themeClasses.text} opacity-60`}>
-              Presiona <kbd className="px-2 py-1 text-xs rounded bg-muted">Esc</kbd> para cerrar
+          {/* Corporate Footer */}
+          <div className="flex items-center justify-between pt-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <kbd className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-mono">Esc</kbd>
+              <span>para cerrar</span>
             </p>
             {error && isRetryableError && (
               <Button
                 onClick={handleRetry}
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 <RefreshCw className="h-4 w-4" />
                 Reintentar

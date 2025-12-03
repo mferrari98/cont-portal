@@ -46,96 +46,112 @@ export function SearchResults({
   themeClasses,
   onRetry
 }: SearchResultsProps) {
-  // Loading state (only show during initial data loading)
+  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
         <div className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-3 w-1/4" />
         </div>
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-4">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-full" />
+          <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-16" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-5 w-5 rounded" />
+                <Skeleton className="h-4 w-full" />
+              </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     );
   }
 
-  // Searching state (show spinner during search)
+  // Searching state
   if (isSearching) {
     return (
-      <Card className="p-8 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
-        <p className={`text-sm ${themeClasses.text} opacity-70`}>Buscando...</p>
-      </Card>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400 mb-3" />
+        <p className="text-sm text-gray-600 dark:text-gray-400">Buscando...</p>
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <Card className={`p-6 text-center ${themeClasses.bg} ${themeClasses.text} ${themeClasses.border}`} role="alert" aria-live="polite" aria-atomic="true">
+      <div className="p-6 text-center" role="alert" aria-live="polite" aria-atomic="true">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/20">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800">
             <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <p className={`font-medium ${themeClasses.text} mb-1`}>{error}</p>
-            <p className={`text-sm ${themeClasses.text} opacity-60`}>
-              No se pudo cargar el directorio de internos
+            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">{error}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              No se pudo cargar el directorio interno
             </p>
           </div>
           {onRetry && (
-            <Button onClick={onRetry} variant="outline" size="sm" className="flex items-center gap-2">
+            <Button
+              onClick={onRetry}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
               <RefreshCw className="h-4 w-4" />
               Reintentar
             </Button>
           )}
         </div>
-      </Card>
+      </div>
     );
   }
 
   // Empty search state
   if (searchQuery.trim().length === 0) {
     return (
-      <Card className="p-8 text-center">
+      <div className="p-8 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/20">
-            <SearchIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-300 dark:border-gray-600">
+            <SearchIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
           </div>
           <div>
-            <p className={`font-medium ${themeClasses.text} mb-1`}>Buscar en el Directorio</p>
-            <p className={`text-sm ${themeClasses.text} opacity-60`}>
-              Escriba un nombre, departamento o extensión para comenzar
+            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+              Directorio Interno
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
+              Ingrese un nombre, departamento o extensión para buscar
             </p>
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
-  // No results state (only show when not searching)
+  // No results state
   if (groupedResults.length === 0 && searchQuery.trim().length >= 2 && !isSearching) {
     return (
-      <Card className="p-8 text-center">
+      <div className="p-8 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-4 rounded-full bg-gray-100 dark:bg-gray-800">
-            <Users className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-300 dark:border-gray-600">
+            <Users className="h-6 w-6 text-gray-500 dark:text-gray-400" />
           </div>
           <div>
-            <p className={`font-medium ${themeClasses.text} mb-1`}>Sin Resultados</p>
-            <p className={`text-sm ${themeClasses.text} opacity-60`}>
-              No se encontraron contactos para "{searchQuery}"
+            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">Sin Resultados</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
+              No se encontraron personal para "<span className="font-mono bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{searchQuery}</span>"
             </p>
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -156,7 +172,7 @@ export function SearchResults({
   }, [groupedResults]);
 
   return (
-    <div className="space-y-3" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
+    <div className="space-y-2" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
       {Object.entries(resultsByExtension).map(([extension, people], index) => {
         const typedPeople = people as typeof groupedResults[0]['personnel'];
         const department = typedPeople[0]?.department || 'Sector desconocido';
@@ -176,11 +192,7 @@ export function SearchResults({
               searchTerms={searchTerms}
               themeClasses={themeClasses}
             />
-            {/* Separator line between sectors - only add if not last item */}
-            {index < Object.keys(resultsByExtension).length - 1 && (
-              <div className="h-px bg-gray-300 dark:bg-gray-600 my-6 opacity-100"></div>
-            )}
-          </div>
+            </div>
         );
       }).filter(Boolean)}
     </div>
@@ -188,7 +200,7 @@ export function SearchResults({
 }
 
 /**
- * Extension Card - modern card showing extension details with shadcn components
+ * Corporate Extension Card with professional business styling
  */
 function ExtensionCard({
   extension,
@@ -217,60 +229,56 @@ function ExtensionCard({
   const isSinglePerson = people.length === 1;
 
   return (
-    <Card className={`${themeClasses.border} ${themeClasses.bg}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Building className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className={`text-base font-semibold ${themeClasses.text} truncate leading-tight`}>
-                {department}
-              </CardTitle>
-              <p className={`text-xs ${themeClasses.text} opacity-60 mt-1`}>
-                {people.length} contacto{people.length === 1 ? '' : 's'}
-              </p>
-            </div>
-          </div>
-          <div className={`font-mono text-base px-3 py-1.5 bg-yellow-100 dark:bg-yellow-500 text-yellow-700 dark:text-black font-semibold rounded-md`}>
-            <span className="opacity-70">int.</span> {extension}
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-full bg-muted/50">
-            <Phone className="h-4 w-4 text-muted-foreground" />
+    <div className={`rounded-lg p-4 ${themeClasses.bgCard} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className={`p-2 ${themeClasses.bgCard}/80 rounded-md`}>
+            <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className={`text-base font-medium ${themeClasses.text} break-words leading-relaxed`}>
-              {isSinglePerson ? (
-                highlightText(normalizeName(people[0].name), searchTerms)
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {people.map((person) => (
-                    <Badge
-                      key={person.id}
-                      variant="secondary"
-                      className="text-sm px-2.5 py-1 font-medium"
-                    >
-                      {highlightText(normalizeName(person.name), searchTerms)}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+              {department}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {people.length} {people.length === 1 ? 'persona' : 'personas'}
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        <div className={`flex items-center gap-2 font-mono text-sm px-2.5 py-1.5 ${themeClasses.bgCard}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
+          <Phone className="h-3 w-3" />
+          <span>int.</span> {extension}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className={`p-1.5 ${themeClasses.bgCard}/80 rounded-md`}>
+          <Users className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-gray-900 dark:text-gray-100 break-words">
+            {isSinglePerson ? (
+              <span>{highlightText(normalizeName(people[0].name), searchTerms)}</span>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {people.map((person) => (
+                  <span
+                    key={person.id}
+                    className="inline-block px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                  >
+                    {highlightText(normalizeName(person.name), searchTerms)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 /**
- * Function to highlight search terms in text
+ * Function to highlight search terms with corporate styling
  */
 function highlightText(text: string, searchTerms: string[] = []) {
   if (!searchTerms || searchTerms.length === 0) {
@@ -288,7 +296,15 @@ function highlightText(text: string, searchTerms: string[] = []) {
           part.toLowerCase() === term.toLowerCase()
         );
         return isMatch ? (
-          <mark key={index} className="bg-[#6ccff6] text-gray-900 px-0.5 rounded font-semibold">
+          <mark
+            key={index}
+            className="
+              inline-block px-1 py-0.5 -m-0.5
+              bg-yellow-200 dark:bg-yellow-900/30
+              text-yellow-900 dark:text-yellow-200
+              font-medium rounded
+            "
+          >
             {part}
           </mark>
         ) : (
