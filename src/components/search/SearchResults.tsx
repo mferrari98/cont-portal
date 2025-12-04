@@ -227,7 +227,7 @@ function ExtensionCard({
   const isSinglePerson = people.length === 1;
 
   return (
-    <div className={`rounded-lg p-4 ${themeClasses.bg} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+    <div className={`rounded-lg p-4 bg-[#21211f] hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className={`p-2 ${themeClasses.bg}/80 rounded-md`}>
@@ -242,7 +242,7 @@ function ExtensionCard({
             </p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 font-mono text-sm px-2.5 py-1.5 ${themeClasses.bg}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
+        <div className={`flex items-center gap-2 font-mono px-2.5 py-1.5 ${themeClasses.bg}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
           <Phone className="h-3 w-3" />
           <span>int.</span> {extension}
         </div>
@@ -261,7 +261,7 @@ function ExtensionCard({
                 {people.map((person) => (
                   <span
                     key={person.id}
-                    className="inline-block px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                    className="inline-block px-2 py-0.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
                   >
                     {highlightText(normalizeName(person.name), searchTerms)}
                   </span>
