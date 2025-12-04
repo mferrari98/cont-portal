@@ -224,7 +224,7 @@ function App() {
                 onClick={toggleTheme}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 hover:cursor-pointer`}
               >
                 {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
@@ -234,7 +234,7 @@ function App() {
                 onClick={handleLogoutClick}
                 variant="outline"
                 size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8`}
+                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 hover:cursor-pointer`}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -250,7 +250,7 @@ function App() {
               <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} animate-fade-in inline-block whitespace-nowrap`}>
                 Portal de Servicios
               </h1>
-              <p className={`text-base mt-2 ${isDark ? themeClasses.textSubtle : 'text-[#6ccff6]'} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
+              <p className={`text-base mt-2 ${themeClasses.textSubtle} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
                 Centro de Control
               </p>
             </div>
@@ -266,14 +266,14 @@ function App() {
                 >
                   <button
                     onClick={() => handleServiceClick(service.id, service.url)}
-                    className="group block h-full w-full text-left"
+                    className="group block h-full w-full text-left hover:cursor-pointer"
                     disabled={loadingService === service.id}
                   >
                     <Card className={`${themeClasses.bgCard} h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
                       <CardContent className="p-4 h-full min-h-[77px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
                           <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
-                            <div className={`${themeClasses.text} ${service.id === 'dash' && !isDark ? 'text-[#6ccff6]' : ''} transition-transform duration-300 group-hover:scale-110`}>
+                            <div className={`${themeClasses.text} ${service.id === 'dash' ? themeClasses.textSubtle : ''} transition-transform duration-300 group-hover:scale-121`}>
                               {loadingService === service.id ? (
                                 <Spinner size="sm" />
                               ) : (
@@ -282,7 +282,7 @@ function App() {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 group-hover:text-[#6ccff6]`}>
+                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 group-hover:${themeClasses.textSubtle}`}>
                               {service.name}
                             </h3>
                             <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>

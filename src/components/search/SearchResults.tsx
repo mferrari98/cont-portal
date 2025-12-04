@@ -58,7 +58,7 @@ export function SearchResults({
           <Skeleton className="h-3 w-1/4" />
         </div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div key={i} className={`${themeClasses.border} rounded-lg p-4`}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -93,7 +93,7 @@ export function SearchResults({
     return (
       <div className="p-6 text-center" role="alert" aria-live="polite" aria-atomic="true">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800">
+          <div className={`p-3 ${themeClasses.bg} rounded-full border ${themeClasses.border}`}>
             <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
@@ -227,12 +227,13 @@ function ExtensionCard({
     text: string;
     bg: string;
     textMuted?: string;
+    resultBg?: string;
   };
 }) {
   const isSinglePerson = people.length === 1;
 
   return (
-    <div className="rounded-lg p-4 mb-3 bg-[#F0F0F0] dark:bg-[#2A2A28]">
+    <div className={`rounded-lg p-4 mb-3 ${themeClasses.resultBg}`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className={`p-2 ${themeClasses.bg}/80 rounded-md`}>
@@ -305,8 +306,8 @@ function highlightText(text: string, searchTerms: string[] = []) {
             key={index}
             className="
               inline-block px-1 py-0.5 -m-0.5
-              bg-yellow-200 dark:bg-yellow-900/30
-              text-yellow-900 dark:text-yellow-200
+              bg-blue-100 dark:bg-blue-900/30
+              text-[#141413] dark:text-blue-200
               font-medium rounded
             "
           >

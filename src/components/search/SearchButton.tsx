@@ -20,7 +20,7 @@ export function SearchButton({ onClick, themeClasses, className = '' }: SearchBu
       onClick={onClick}
       variant="outline"
       size="icon"
-      className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 ${className}`}
+      className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 hover:cursor-pointer ${className}`}
       aria-label="Buscar directorio interno"
       title="Buscar directorio interno"
     >

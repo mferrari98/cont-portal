@@ -149,7 +149,7 @@ export function Login({ onLogin, theme }: LoginProps) {
               <Button
                 type="submit"
                 size="lg"
-                className={`w-full ${themeClasses.accent} text-[#141413] font-semibold rounded-md hover:bg-[#5ab8e8] transition-all duration-200`}
+                className={`w-full ${themeClasses.accent} font-semibold rounded-md hover:opacity-90 transition-all duration-200`}
               >
                 Iniciar sesión
               </Button>
