@@ -189,7 +189,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
               className={`
                 pl-10 pr-10 h-10
                 border ${themeClasses.border}
-                ${themeClasses.bgCard}
+                ${themeClasses.bg}
                 ${themeClasses.text}
                 placeholder:text-muted-foreground
                 focus:ring-2 focus:ring-ring focus:border-ring

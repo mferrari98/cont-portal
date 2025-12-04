@@ -1,7 +1,5 @@
 import { Loader2, Users, AlertCircle, RefreshCw, SearchIcon, Phone, Building } from 'lucide-react';
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DepartmentGroup } from '@/types/personnel';
@@ -173,7 +171,7 @@ export function SearchResults({
 
   return (
     <div className="space-y-2" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
-      {Object.entries(resultsByExtension).map(([extension, people], index) => {
+      {Object.entries(resultsByExtension).map(([extension, people]) => {
         const typedPeople = people as typeof groupedResults[0]['personnel'];
         const department = typedPeople[0]?.department || 'Sector desconocido';
         const searchTerms = typedPeople[0]?.searchTerms || [];
@@ -229,10 +227,10 @@ function ExtensionCard({
   const isSinglePerson = people.length === 1;
 
   return (
-    <div className={`rounded-lg p-4 ${themeClasses.bgCard} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+    <div className={`rounded-lg p-4 ${themeClasses.bg} hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={`p-2 ${themeClasses.bgCard}/80 rounded-md`}>
+          <div className={`p-2 ${themeClasses.bg}/80 rounded-md`}>
             <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
           </div>
           <div className="flex-1 min-w-0">
@@ -244,14 +242,14 @@ function ExtensionCard({
             </p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 font-mono text-sm px-2.5 py-1.5 ${themeClasses.bgCard}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
+        <div className={`flex items-center gap-2 font-mono text-sm px-2.5 py-1.5 ${themeClasses.bg}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
           <Phone className="h-3 w-3" />
           <span>int.</span> {extension}
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className={`p-1.5 ${themeClasses.bgCard}/80 rounded-md`}>
+        <div className={`p-1.5 ${themeClasses.bg}/80 rounded-md`}>
           <Users className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
         </div>
         <div className="flex-1 min-w-0">
