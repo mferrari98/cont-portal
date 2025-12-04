@@ -8,6 +8,17 @@
     <meta name="description" content="Portal de servicios para telecomunicaciones y automatismos" />
   </head>
   <body>
+    <script>
+      // Prevent theme flashing by applying theme immediately
+      (function() {
+        const theme = localStorage.getItem('portal_theme') || 'dark';
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

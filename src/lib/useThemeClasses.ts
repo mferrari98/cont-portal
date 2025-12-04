@@ -37,7 +37,9 @@ export const useThemeClasses = (theme: 'light' | 'dark'): ThemeClasses => {
       bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F5F4F0]',
       iconBg: isDark ? 'bg-[#141413]' : 'bg-white',
       inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#F5F4F0]',
-      accent: 'bg-[#6ccff6]'
+      accent: 'bg-[#6ccff6]',
+      badge: isDark ? 'bg-[#2A2A28] text-[#E5E4E0]' : 'bg-[#E8E8E8] text-[#141413]',
+      resultBg: isDark ? 'bg-[#2A2A28]' : 'bg-[#F0F0F0]'
     };
   }, [theme]);
 };

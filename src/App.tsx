@@ -87,6 +87,13 @@ function App() {
     const savedUser = localStorage.getItem('portal_user')
     const savedTheme = (localStorage.getItem('portal_theme') as 'light' | 'dark') || 'dark'
 
+    // Apply theme immediately to prevent any color flashing
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+
     if (savedUser) setUser(savedUser)
     setTheme(savedTheme)
     setIsLoading(false)

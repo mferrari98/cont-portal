@@ -27,6 +27,11 @@ interface SearchResultsProps {
     text: string;
     bg: string;
     textMuted?: string;
+    textSubtle?: string;
+    bgCard?: string;
+    bgHover?: string;
+    badge?: string;
+    resultBg?: string;
   };
   onRetry?: () => void; // Optional retry function
 }
@@ -77,8 +82,8 @@ export function SearchResults({
   if (isSearching) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400 mb-3" />
-        <p className="text-sm text-gray-600 dark:text-gray-400">Buscando...</p>
+        <Loader2 className={`h-6 w-6 animate-spin mb-3 ${themeClasses.textSubtle || themeClasses.textMuted}`} />
+        <p className={`text-sm ${themeClasses.textMuted}`}>Buscando...</p>
       </div>
     );
   }
@@ -92,8 +97,8 @@ export function SearchResults({
             <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">{error}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className={`font-medium ${themeClasses.text} mb-1`}>{error}</p>
+            <p className={`text-sm ${themeClasses.textMuted}`}>
               No se pudo cargar el directorio interno
             </p>
           </div>
@@ -102,7 +107,7 @@ export function SearchResults({
               onClick={onRetry}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              className={`flex items-center gap-2 ${themeClasses.border} ${themeClasses.text} ${themeClasses.bgHover}`}
             >
               <RefreshCw className="h-4 w-4" />
               Reintentar
@@ -118,14 +123,14 @@ export function SearchResults({
     return (
       <div className="p-8 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-300 dark:border-gray-600">
-            <SearchIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+          <div className={`p-3 ${themeClasses.bg} rounded-full border ${themeClasses.border}`}>
+            <SearchIcon className={`h-6 w-6 ${themeClasses.textMuted}`} />
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+            <p className={`font-medium ${themeClasses.text} mb-1`}>
               Directorio Interno
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
+            <p className={`text-sm ${themeClasses.textMuted} max-w-xs mx-auto`}>
               Ingrese un nombre, departamento o extensión para buscar
             </p>
           </div>
@@ -139,13 +144,13 @@ export function SearchResults({
     return (
       <div className="p-8 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-300 dark:border-gray-600">
-            <Users className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+          <div className={`p-3 ${themeClasses.bg} rounded-full border ${themeClasses.border}`}>
+            <Users className={`h-6 w-6 ${themeClasses.textMuted}`} />
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100 mb-1">Sin Resultados</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs mx-auto">
-              No se encontraron personal para "<span className="font-mono bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{searchQuery}</span>"
+            <p className={`font-medium ${themeClasses.text} mb-1`}>Sin Resultados</p>
+            <p className={`text-sm ${themeClasses.textMuted} max-w-xs mx-auto`}>
+              No se encontraron personal para "<span className={`font-mono ${themeClasses.bg}/80 px-1 py-0.5 rounded text-xs ${themeClasses.text}`}>{searchQuery}</span>"
             </p>
           </div>
         </div>
@@ -170,7 +175,7 @@ export function SearchResults({
   }, [groupedResults]);
 
   return (
-    <div className="space-y-2" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
+    <div className="space-y-1 mx-4 sm:mx-6 my-2" role="region" aria-live="polite" aria-label="Resultados de búsqueda">
       {Object.entries(resultsByExtension).map(([extension, people]) => {
         const typedPeople = people as typeof groupedResults[0]['personnel'];
         const department = typedPeople[0]?.department || 'Sector desconocido';
@@ -227,22 +232,22 @@ function ExtensionCard({
   const isSinglePerson = people.length === 1;
 
   return (
-    <div className={`rounded-lg p-4 bg-[#21211f] hover:bg-gray-100/50 dark:hover:bg-gray-700/50 transition-colors`}>
+    <div className="rounded-lg p-4 mb-3 bg-[#F0F0F0] dark:bg-[#2A2A28]">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className={`p-2 ${themeClasses.bg}/80 rounded-md`}>
-            <Building className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+            <Building className={`h-4 w-4 ${themeClasses.textMuted}`} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+            <h3 className={`font-medium ${themeClasses.text} truncate`}>
               {department}
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className={`text-xs ${themeClasses.textMuted} mt-0.5`}>
               {people.length} {people.length === 1 ? 'persona' : 'personas'}
             </p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 font-mono px-2.5 py-1.5 ${themeClasses.bg}/80 text-gray-700 dark:text-gray-300 font-medium rounded-md`}>
+        <div className={`flex items-center gap-2 font-mono px-2.5 py-1.5 ${themeClasses.bg}/80 ${themeClasses.text} font-medium rounded-md`}>
           <Phone className="h-3 w-3" />
           <span>int.</span> {extension}
         </div>
@@ -250,18 +255,20 @@ function ExtensionCard({
 
       <div className="flex items-center gap-3">
         <div className={`p-1.5 ${themeClasses.bg}/80 rounded-md`}>
-          <Users className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
+          <Users className={`h-3.5 w-3.5 ${themeClasses.textMuted}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-gray-900 dark:text-gray-100 break-words">
+          <div className="text-sm break-words">
             {isSinglePerson ? (
-              <span>{highlightText(normalizeName(people[0].name), searchTerms)}</span>
+              <span className={`persona-badge inline-block px-2 py-0.5 text-sm rounded`}>
+                {highlightText(normalizeName(people[0].name), searchTerms)}
+              </span>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {people.map((person) => (
                   <span
                     key={person.id}
-                    className="inline-block px-2 py-0.5 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                    className={`persona-badge inline-block px-2 py-0.5 text-sm rounded`}
                   >
                     {highlightText(normalizeName(person.name), searchTerms)}
                   </span>

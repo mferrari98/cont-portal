@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useThemeClasses } from "@/lib/useThemeClasses"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -45,16 +46,7 @@ export function Login({ onLogin, theme }: LoginProps) {
     onLogin("invitado")
   }
 
-  const themeClasses = {
-    bg: isDark ? 'bg-[#141413]' : 'bg-[#FAF9F5]',
-    bgCard: isDark ? 'bg-[#1F1E1D]' : 'bg-[#E5E5E5]',
-    text: isDark ? 'text-[#E5E4E0]' : 'text-[#141413]',
-    textMuted: isDark ? 'text-[#6ccff6]' : 'text-[#141413]/60',
-    border: '',
-    borderHover: '',
-    iconBg: isDark ? 'bg-[#141413]' : 'bg-white',
-    inputInnerBg: isDark ? 'bg-[#3A3A38]' : 'bg-[#F9F9F9]' // Aún más claro para mejor contraste
-  }
+  const themeClasses = useThemeClasses(theme)
 
   return (
     <div className={`min-h-screen ${themeClasses.bg} flex items-center justify-center p-4 relative ${isDark ? 'dark' : ''}`}>
@@ -98,7 +90,7 @@ export function Login({ onLogin, theme }: LoginProps) {
                       Usuario
                     </FormLabel>
                     <FormControl>
-                      <div className={`${themeClasses.inputInnerBg} h-9 flex items-center rounded-md`}>
+                      <div className={`${themeClasses.inputBg} h-9 flex items-center rounded-md`}>
                         <div className="flex items-center gap-3 w-full rounded-md">
                           <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300 ml-3`}>
                             <User className={`w-4 h-4 ${themeClasses.text} transition-transform duration-300 group-hover:scale-110`} />
@@ -127,7 +119,7 @@ export function Login({ onLogin, theme }: LoginProps) {
                       Contraseña
                     </FormLabel>
                     <FormControl>
-                      <div className={`${themeClasses.inputInnerBg} h-9 flex items-center rounded-md`}>
+                      <div className={`${themeClasses.inputBg} h-9 flex items-center rounded-md`}>
                         <div className="flex items-center gap-3 w-full rounded-md">
                           <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300 ml-3`}>
                             <Lock className={`w-4 h-4 ${themeClasses.text} transition-transform duration-300 group-hover:scale-110`} />
@@ -157,7 +149,7 @@ export function Login({ onLogin, theme }: LoginProps) {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-[#6ccff6] text-[#141413] font-semibold rounded-md hover:bg-[#5ab8e8] transition-all duration-200"
+                className={`w-full ${themeClasses.accent} text-[#141413] font-semibold rounded-md hover:bg-[#5ab8e8] transition-all duration-200`}
               >
                 Iniciar sesión
               </Button>
@@ -181,7 +173,7 @@ export function Login({ onLogin, theme }: LoginProps) {
 
           {/* Guest Button as Card */}
           <div
-            className={`${themeClasses.inputInnerBg} h-9 cursor-pointer flex items-center justify-center rounded-md`}
+            className={`${themeClasses.inputBg} h-9 cursor-pointer flex items-center justify-center rounded-md`}
             onClick={handleGuest}
           >
             <div className={`${themeClasses.text} font-medium text-base`}>
