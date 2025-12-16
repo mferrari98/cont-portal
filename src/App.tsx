@@ -67,11 +67,11 @@ const allServices: Service[] = [
     url: '/monitor/'
   },
   {
-    id: 'emp',
-    name: 'Emp',
+    id: 'empa',
+    name: 'Empa',
     icon: <ChefHat className="w-6 h-6" />,
     desc: 'Gestión',
-    url: '/emp/'
+    url: '/empa/'
   }
 ]
 
