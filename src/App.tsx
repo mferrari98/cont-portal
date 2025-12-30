@@ -168,14 +168,9 @@ function App() {
   }
 
   
-  const handleServiceClick = (serviceId: string, url: string) => {
+  const handleServiceClick = (serviceId: string) => {
+    // Optimistically show loading state for accessibility feedback
     setLoadingService(serviceId)
-    // Navigate to the service
-    window.location.href = url
-    // Reset loading state after a timeout (in case navigation takes time)
-    setTimeout(() => {
-      setLoadingService(null)
-    }, 3000)
   }
 
   const services = useMemo(() =>
@@ -264,10 +259,12 @@ function App() {
                   key={service.id}
                   className={`animate-fade-in-up stagger-${index + 1}`}
                 >
-                  <button
-                    onClick={() => handleServiceClick(service.id, service.url)}
-                    className="group block h-full w-full text-left hover:cursor-pointer"
-                    disabled={loadingService === service.id}
+                  <a
+                    href={service.url}
+                    onClick={() => handleServiceClick(service.id)}
+                    className="group block h-full w-full text-left hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
+                    aria-label={`Abrir ${service.name}`}
+                    aria-busy={loadingService === service.id}
                   >
                     <Card className={`${themeClasses.bgCard} h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
                       <CardContent className="p-4 h-full min-h-[77px] flex items-center">
@@ -282,7 +279,7 @@ function App() {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 group-hover:${themeClasses.textSubtle}`}>
+                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 ${isDark ? 'group-hover:text-[#60a5fa]' : 'group-hover:text-[#3b82f6]'}`}>
                               {service.name}
                             </h3>
                             <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
@@ -292,7 +289,8 @@ function App() {
                         </div>
                       </CardContent>
                     </Card>
-                  </button>
+                  </a>
+
                 </div>
               ))}
             </div>

@@ -3,6 +3,35 @@ import * as XLSX from 'xlsx';
 import { cachedNormalizeText } from '@/lib/normalize';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
 
+const DIRECTORY_MAX_ROWS = 800;
+const STOP_TOKEN_NORMALIZED = (
+  ['telefonos internos reserva', 'reserva 6000'] as const
+).map(token => cachedNormalizeText(token));
+
+function buildWorksheetRange(worksheet: XLSX.WorkSheet): string {
+  const baseRange = worksheet['!ref']
+    ? XLSX.utils.decode_range(worksheet['!ref'])
+    : XLSX.utils.decode_range(`A1:E${DIRECTORY_MAX_ROWS}`);
+
+  const normalizedRange = {
+    s: { c: 0, r: 0 },
+    e: {
+      c: 4,
+      r: Math.min(baseRange.e.r, DIRECTORY_MAX_ROWS - 1)
+    }
+  };
+
+  return XLSX.utils.encode_range(normalizedRange);
+}
+
+function shouldStopProcessing(...values: string[]): boolean {
+  return values.some(value => {
+    if (!value) return false;
+    const normalized = cachedNormalizeText(value);
+    return normalized.length > 0 && STOP_TOKEN_NORMALIZED.some(token => normalized.includes(token));
+  });
+}
+
 /**
  * Transform technical errors into user-friendly messages
  * Maps different error types to appropriate Spanish messages
@@ -74,10 +103,11 @@ export function useInternalDirectory(): SearchState & {
   // Load Excel data on demand (when first opened)
   const loadData = useCallback(async () => {
     // Allow retry even if data was previously marked as loaded (in case of file changes)
-    // But skip if we're currently loading or have valid data
-    if (isLoading || (dataLoaded && allPersonnel.length > 0 && !error)) {
+    // But skip if we're currently loading or the last load succeeded
+    if (isLoading || (dataLoaded && !error)) {
       return; // Skip if already loading or have valid data
     }
+
 
     try {
       setIsLoading(true);
@@ -136,11 +166,12 @@ export function useInternalDirectory(): SearchState & {
       }
 
       // Convert to JSON with raw values - more efficient
+      const worksheetRange = buildWorksheetRange(worksheet);
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         defval: '',
         blankrows: false,
-        range: 'A1:E200' // Limit range for performance
+        range: worksheetRange
       }) as (string | number)[][];
 
       if (!rawData || rawData.length === 0) {
@@ -161,7 +192,7 @@ export function useInternalDirectory(): SearchState & {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, dataLoaded, error]); // Removed allPersonnel.length to prevent memory leak
+  }, [isLoading, dataLoaded, error]);
 
   
   /**
@@ -188,10 +219,8 @@ export function useInternalDirectory(): SearchState & {
       const colE = String(row[4] || '').trim(); // Name (real data in column E)
 
       // Check for stop condition: TELÉFONOS INTERNOS RESERVA 6000
-      if (colA.includes('TELÉFONOS INTERNOS RESERVA') ||
-          colA.includes('RESERVA 6000') ||
-          colD.includes('TELÉFONOS INTERNOS RESERVA')) {
-                stopProcessing = true;
+      if (shouldStopProcessing(colA, colD)) {
+        stopProcessing = true;
         break;
       }
 

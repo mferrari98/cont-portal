@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen]); // Remove loadData from dependencies to prevent infinite loops
+  }, [isOpen, loadData]);
 
   // Handle retry functionality
   const handleRetry = () => {
@@ -117,6 +117,11 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
       }, 0);
     }, 0);
   }, []); // Memoized function with no dependencies
+
+  const resultCount = useMemo(
+    () => countWordAppearances(searchQuery, groupedResults),
+    [searchQuery, groupedResults, countWordAppearances]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -225,7 +230,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  <span>{countWordAppearances(searchQuery, groupedResults)} resultado{countWordAppearances(searchQuery, groupedResults) === 1 ? '' : 's'}</span>
+                  <span>{resultCount} resultado{resultCount === 1 ? '' : 's'}</span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1">
@@ -233,7 +238,7 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
                   <span>{groupedResults.length} departamento{groupedResults.length === 1 ? '' : 's'}</span>
                 </div>
               </div>
-              {countWordAppearances(searchQuery, groupedResults) > 10 && (
+              {resultCount > 10 && (
                 <span className="text-xs opacity-75">
                   ↓ Desplácese para ver más resultados
                 </span>

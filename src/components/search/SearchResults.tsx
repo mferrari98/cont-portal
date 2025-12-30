@@ -49,6 +49,21 @@ export function SearchResults({
   themeClasses,
   onRetry
 }: SearchResultsProps) {
+  const resultsByExtension = useMemo(() => {
+    const extensionGroups: { [key: string]: typeof groupedResults[0]['personnel'] } = {};
+
+    groupedResults.forEach(dept => {
+      dept.personnel.forEach(person => {
+        if (!extensionGroups[person.extension]) {
+          extensionGroups[person.extension] = [];
+        }
+        extensionGroups[person.extension].push(person);
+      });
+    });
+
+    return extensionGroups;
+  }, [groupedResults]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -157,22 +172,6 @@ export function SearchResults({
       </div>
     );
   }
-
-  // Group results by extension to decide display format
-  const resultsByExtension = useMemo(() => {
-    const extensionGroups: { [key: string]: typeof groupedResults[0]['personnel'] } = {};
-
-    groupedResults.forEach(dept => {
-      dept.personnel.forEach(person => {
-        if (!extensionGroups[person.extension]) {
-          extensionGroups[person.extension] = [];
-        }
-        extensionGroups[person.extension].push(person);
-      });
-    });
-
-    return extensionGroups;
-  }, [groupedResults]);
 
   return (
     <div className="space-y-1 mx-4 sm:mx-6 my-2" role="region" aria-live="polite" aria-label="Resultados de búsqueda">

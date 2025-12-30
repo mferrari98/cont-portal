@@ -14,7 +14,10 @@ export interface ThemeClasses {
   iconBg: string;
   inputBg: string;
   accent: string;
+  badge: string;
+  resultBg: string;
 }
+
 
 /**
  * Hook centralizado para manejar clases de tema consistentes
