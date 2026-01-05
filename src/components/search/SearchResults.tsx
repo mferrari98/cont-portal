@@ -16,6 +16,10 @@ function normalizeName(name: string): string {
     .join(' ');
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 interface SearchResultsProps {
   groupedResults: DepartmentGroup[];
   isLoading: boolean;
@@ -290,8 +294,16 @@ function highlightText(text: string, searchTerms: string[] = []) {
     return <span>{text}</span>;
   }
 
+  const escapedTerms = searchTerms
+    .map(term => escapeRegExp(term))
+    .filter(term => term.length > 0);
+
+  if (escapedTerms.length === 0) {
+    return <span>{text}</span>;
+  }
+
   // Create regex pattern for all search terms (case insensitive)
-  const pattern = new RegExp(`(${searchTerms.join('|')})`, 'gi');
+  const pattern = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
   const parts = text.split(pattern);
 
   return (

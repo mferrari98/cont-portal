@@ -145,7 +145,7 @@ function App() {
     }))
   }
 
-  const handleLogin = (username: string) => {
+  const handleLogin = async (username: string) => {
     setUser(username)
     localStorage.setItem('portal_user', username)
   }
@@ -161,7 +161,13 @@ function App() {
     }
   }
 
-  const handleLogoutConfirm = () => {
+  const handleLogoutConfirm = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (err) {
+      // Ignore network errors to allow client-side logout
+    }
+
     setUser(null)
     localStorage.removeItem('portal_user')
     setShowLogoutDialog(false)

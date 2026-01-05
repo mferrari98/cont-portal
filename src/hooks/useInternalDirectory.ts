@@ -1,17 +1,29 @@
 import { useState, useMemo, useCallback } from 'react';
-import * as XLSX from 'xlsx';
+import type * as XLSX from 'xlsx';
 import { cachedNormalizeText } from '@/lib/normalize';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
+
+type XLSXModule = typeof import('xlsx');
+
+let xlsxModule: XLSXModule | null = null;
+
+async function getXlsxModule(): Promise<XLSXModule> {
+  if (!xlsxModule) {
+    xlsxModule = await import('xlsx');
+  }
+
+  return xlsxModule;
+}
 
 const DIRECTORY_MAX_ROWS = 800;
 const STOP_TOKEN_NORMALIZED = (
   ['telefonos internos reserva', 'reserva 6000'] as const
 ).map(token => cachedNormalizeText(token));
 
-function buildWorksheetRange(worksheet: XLSX.WorkSheet): string {
+function buildWorksheetRange(worksheet: XLSX.WorkSheet, xlsx: XLSXModule): string {
   const baseRange = worksheet['!ref']
-    ? XLSX.utils.decode_range(worksheet['!ref'])
-    : XLSX.utils.decode_range(`A1:E${DIRECTORY_MAX_ROWS}`);
+    ? xlsx.utils.decode_range(worksheet['!ref'])
+    : xlsx.utils.decode_range(`A1:E${DIRECTORY_MAX_ROWS}`);
 
   const normalizedRange = {
     s: { c: 0, r: 0 },
@@ -21,7 +33,7 @@ function buildWorksheetRange(worksheet: XLSX.WorkSheet): string {
     }
   };
 
-  return XLSX.utils.encode_range(normalizedRange);
+  return xlsx.utils.encode_range(normalizedRange);
 }
 
 function shouldStopProcessing(...values: string[]): boolean {
@@ -151,6 +163,7 @@ export function useInternalDirectory(): SearchState & {
         throw new Error('El archivo del directorio no está disponible');
       }
 
+      const XLSX = await getXlsxModule();
       const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -166,7 +179,7 @@ export function useInternalDirectory(): SearchState & {
       }
 
       // Convert to JSON with raw values - more efficient
-      const worksheetRange = buildWorksheetRange(worksheet);
+      const worksheetRange = buildWorksheetRange(worksheet, XLSX);
       const rawData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         defval: '',

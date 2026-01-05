@@ -32,13 +32,30 @@ export function Login({ onLogin, theme }: LoginProps) {
     }
   })
 
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setError("")
 
-    if (data.username === "admin" && data.password === "admin") {
-      onLogin("admin")
-    } else {
-      setError("Usuario o contraseña incorrectos")
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: data.username,
+          password: data.password
+        })
+      })
+
+      if (!response.ok) {
+        setError('Usuario o contraseña incorrectos')
+        return
+      }
+
+      const payload = await response.json()
+      const username = typeof payload?.username === 'string' ? payload.username : data.username
+      onLogin(username)
+    } catch (err) {
+      setError('No se pudo conectar al servidor de autenticación')
     }
   }
 

@@ -8,6 +8,9 @@ import { useInternalDirectory } from '@/hooks/useInternalDirectory';
 import { cachedNormalizeText } from '@/lib/normalize';
 import type { DepartmentGroup } from '@/types/personnel';
 
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 interface SearchDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -106,12 +109,13 @@ export function SearchDialog({ isOpen, onClose, themeClasses }: SearchDialogProp
   const countWordAppearances = useCallback((query: string, groupedResults: DepartmentGroup[]): number => {
     if (!query || query.length < 2) return 0;
     const normalizedQuery = cachedNormalizeText(query.trim());
+    const escapedQuery = escapeRegExp(normalizedQuery);
 
     return groupedResults.reduce((total, dept) => {
       return total + dept.personnel.reduce((deptTotal: number, person: { name: string }) => {
         // Count occurrences in the normalized searchable name
         const searchableName = cachedNormalizeText(person.name);
-        const regex = new RegExp(normalizedQuery, 'gi');
+        const regex = new RegExp(escapedQuery, 'gi');
         const matches = searchableName.match(regex);
         return deptTotal + (matches ? matches.length : 0);
       }, 0);
