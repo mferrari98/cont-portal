@@ -272,7 +272,7 @@ function App() {
                     aria-label={`Abrir ${service.name}`}
                     aria-busy={loadingService === service.id}
                   >
-                    <Card className={`${themeClasses.bgCard} h-full relative ${loadingService === service.id ? 'opacity-75' : ''}`}>
+                    <Card className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.borderHover} border h-full relative transition-all duration-300 ease-out shadow-sm ${loadingService === service.id ? 'opacity-75' : ''} group-hover:-translate-y-0.5 group-hover:shadow-md`}>
                       <CardContent className="p-4 h-full min-h-[77px] flex items-center">
                         <div className="flex items-start gap-3 w-full">
                           <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
