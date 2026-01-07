@@ -202,9 +202,12 @@ function App() {
               <div className={`w-8 h-8 rounded-md border flex items-center justify-center ${themeClasses.bgCard} ${themeClasses.border}`}>
                 <Shield className={`w-4 h-4 ${themeClasses.text}`} />
               </div>
-              <span className={`text-base font-medium ${themeClasses.text}`}>
+              <a
+                href="/"
+                className={`text-base font-medium ${themeClasses.text} transition-opacity hover:opacity-80`}
+              >
                 Telecomunicaciones y Automatismos
-              </span>
+              </a>
             </div>
 
             <div className="flex items-center gap-2">

@@ -87,9 +87,12 @@ export function Login({ onLogin, theme }: LoginProps) {
           <h1 className={`text-3xl font-medium tracking-tight ${themeClasses.text} mb-2`}>
             Portal de Servicios
           </h1>
-          <p className={`text-sm ${themeClasses.textMuted}`}>
+          <a
+            href="/"
+            className={`text-sm ${themeClasses.textMuted} transition-opacity hover:opacity-80`}
+          >
             Telecomunicaciones y Automatismos
-          </p>
+          </a>
         </div>
 
         {/* Login Card */}
