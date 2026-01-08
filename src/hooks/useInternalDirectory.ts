@@ -55,7 +55,7 @@ function transformErrorMessage(error: Error | unknown): { message: string; isRet
 
     // HTTP 404 - File not found (non-retryable)
     if (message.includes('http 404') || message.includes('not found')) {
-      return { message: 'Error al cargar el directorio', isRetryable: false };
+      return { message: 'No se encontró el archivo del directorio interno', isRetryable: false };
     }
 
     // File not available (non-retryable)
@@ -116,7 +116,7 @@ export function useInternalDirectory(): SearchState & {
   const loadData = useCallback(async () => {
     // Allow retry even if data was previously marked as loaded (in case of file changes)
     // But skip if we're currently loading or the last load succeeded
-    if (isLoading || (dataLoaded && !error)) {
+    if (isLoading || (dataLoaded && !error) || (error && !isRetryableError)) {
       return; // Skip if already loading or have valid data
     }
 
@@ -205,7 +205,7 @@ export function useInternalDirectory(): SearchState & {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, dataLoaded, error]);
+  }, [isLoading, dataLoaded, error, isRetryableError]);
 
   
   /**

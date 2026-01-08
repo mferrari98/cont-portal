@@ -1,10 +1,7 @@
-import { Login } from "@/components/Login"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useThemeClasses } from "@/lib/useThemeClasses"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { SearchButton } from "@/components/search/SearchButton"
@@ -17,9 +14,7 @@ import {
   LayoutDashboard,
   Map,
   Monitor,
-  ChefHat,
-  LogOut,
-  User
+  ChefHat
 } from "lucide-react"
 
 interface Service {
@@ -77,14 +72,11 @@ const allServices: Service[] = [
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
-  const [user, setUser] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [loadingService, setLoadingService] = useState<string | null>(null)
   const [showSearchDialog, setShowSearchDialog] = useState(false)
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('portal_user')
     const savedTheme = (localStorage.getItem('portal_theme') as 'light' | 'dark') || 'dark'
 
     // Apply theme immediately to prevent any color flashing
@@ -94,7 +86,6 @@ function App() {
       document.documentElement.classList.remove('dark')
     }
 
-    if (savedUser) setUser(savedUser)
     setTheme(savedTheme)
     setIsLoading(false)
   }, [])
@@ -145,52 +136,18 @@ function App() {
     }))
   }
 
-  const handleLogin = async (username: string) => {
-    setUser(username)
-    localStorage.setItem('portal_user', username)
-  }
-
-  const handleLogoutClick = () => {
-    if (user === 'invitado') {
-      // Direct logout for guest users
-      setUser(null)
-      localStorage.removeItem('portal_user')
-    } else {
-      // Show confirmation dialog for admin users
-      setShowLogoutDialog(true)
-    }
-  }
-
-  const handleLogoutConfirm = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    } catch (err) {
-      // Ignore network errors to allow client-side logout
-    }
-
-    setUser(null)
-    localStorage.removeItem('portal_user')
-    setShowLogoutDialog(false)
-  }
-
-  
   const handleServiceClick = (serviceId: string) => {
     // Optimistically show loading state for accessibility feedback
     setLoadingService(serviceId)
   }
 
-  const services = useMemo(() =>
-    user === 'admin' ? allServices : allServices.slice(0, 3),
-    [user]
-  )
+  const services = allServices
   const isDark = theme === 'dark'
 
   // Los hooks deben ser llamados siempre, antes de cualquier return condicional
   const themeClasses = useThemeClasses(theme)
 
   if (isLoading) return null
-
-  if (!user) return <Login onLogin={handleLogin} theme={theme} />
 
   return (
     <div className={`min-h-screen gradient-background relative`}>
@@ -211,12 +168,6 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* User Badge */}
-              <Badge variant="outline" className={`flex items-center gap-1.5 px-3 py-1.5 ${themeClasses.border} ${themeClasses.text}`}>
-                <User className="w-3.5 h-3.5" />
-                {user === 'admin' ? 'Admin' : 'Invitado'}
-              </Badge>
-
               {/* Search Button */}
               <SearchButton
                 onClick={() => setShowSearchDialog(true)}
@@ -233,15 +184,6 @@ function App() {
                 {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
 
-              {/* Logout */}
-              <Button
-                onClick={handleLogoutClick}
-                variant="outline"
-                size="icon"
-                className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 hover:cursor-pointer`}
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
@@ -308,33 +250,6 @@ function App() {
             <Separator className="mt-8 mb-4 opacity-50 animate-fade-in" style={{ animationDelay: '0.8s' }} />
           </div>
         </div>
-
-        {/* Logout Confirmation Dialog */}
-        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent className={`${themeClasses.bgCard} ${themeClasses.text} border-2 ${themeClasses.border}`}>
-            <DialogHeader>
-              <DialogTitle>¿Cerrar sesión?</DialogTitle>
-              <DialogDescription className={themeClasses.textMuted}>
-                ¿Estás seguro que deseas cerrar tu sesión? Tendrás que volver a iniciar sesión para acceder al portal.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowLogoutDialog(false)}
-                className={`${themeClasses.border} ${themeClasses.text}`}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleLogoutConfirm}
-                className="bg-red-500 text-white hover:bg-red-600"
-              >
-                Cerrar sesión
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Search Dialog */}
         <SearchDialog
