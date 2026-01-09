@@ -129,6 +129,32 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const resetLoading = () => {
+      setLoadingService(null)
+    }
+
+    const handlePageShow = () => {
+      resetLoading()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        resetLoading()
+      }
+    }
+
+    window.addEventListener('pageshow', handlePageShow)
+    window.addEventListener('focus', resetLoading)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow)
+      window.removeEventListener('focus', resetLoading)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
