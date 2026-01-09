@@ -25,7 +25,7 @@ interface Service {
   url: string
 }
 
-const allServices: Service[] = [
+const serviciosLocales: Service[] = [
   {
     id: 'guardias',
     name: 'Guardias',
@@ -41,20 +41,6 @@ const allServices: Service[] = [
     url: '/reporte/'
   },
   {
-    id: 'dash',
-    name: 'Dashboard Exemys',
-    icon: <LayoutDashboard className="w-6 h-6" />,
-    desc: 'Panel de control y monitoreo',
-    url: '/dash/'
-  },
-  {
-    id: 'gis',
-    name: 'GIS',
-    icon: <Map className="w-6 h-6" />,
-    desc: 'Sistema de información geográfica',
-    url: '/gis/'
-  },
-  {
     id: 'monitor',
     name: 'Monitor',
     icon: <Monitor className="w-6 h-6" />,
@@ -67,6 +53,23 @@ const allServices: Service[] = [
     icon: <ChefHat className="w-6 h-6" />,
     desc: 'Gestión',
     url: '/empa/'
+  }
+]
+
+const serviciosExternos: Service[] = [
+  {
+    id: 'gis',
+    name: 'GIS',
+    icon: <Map className="w-6 h-6" />,
+    desc: 'Sistema de información geográfica',
+    url: '/gis/'
+  },
+  {
+    id: 'dash',
+    name: 'Dashboard Exemys',
+    icon: <LayoutDashboard className="w-6 h-6" />,
+    desc: 'Panel de control y monitoreo',
+    url: '/dash/'
   }
 ]
 
@@ -141,8 +144,11 @@ function App() {
     setLoadingService(serviceId)
   }
 
-  const services = allServices
   const isDark = theme === 'dark'
+  const gruposServicios = [
+    { id: 'locales', titulo: 'Apps locales', servicios: serviciosLocales },
+    { id: 'externas', titulo: 'Apps externas', servicios: serviciosExternos }
+  ]
 
   // Los hooks deben ser llamados siempre, antes de cualquier return condicional
   const themeClasses = useThemeClasses(theme)
@@ -193,10 +199,10 @@ function App() {
           <div className="max-w-5xl mx-auto">
             {/* Header */}
             <div className="mb-6 mt-8">
-              <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} animate-fade-in inline-block whitespace-nowrap`}>
+              <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} inline-block whitespace-nowrap`}>
                 Portal de Servicios
               </h1>
-              <p className={`text-base mt-2 ${themeClasses.textSubtle} animate-fade-in`} style={{ animationDelay: '2.5s' }}>
+              <p className={`text-base mt-2 ${themeClasses.textSubtle}`}>
                 Centro de Control
               </p>
             </div>
@@ -204,44 +210,56 @@ function App() {
             <Separator className="mb-8 opacity-50 animate-fade-in" style={{ animationDelay: '3s' }} />
 
             {/* Services Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map((service, index) => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {gruposServicios.map((grupo) => (
                 <div
-                  key={service.id}
-                  className={`animate-fade-in-up stagger-${index + 1}`}
+                  key={grupo.id}
+                  className={grupo.id === 'locales' ? 'lg:col-span-2' : 'lg:col-span-1'}
                 >
-                  <a
-                    href={service.url}
-                    onClick={() => handleServiceClick(service.id)}
-                    className="group block h-full w-full text-left hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
-                    aria-label={`Abrir ${service.name}`}
-                    aria-busy={loadingService === service.id}
-                  >
-                    <Card className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.borderHover} border h-full relative transition-all duration-300 ease-out shadow-sm ${loadingService === service.id ? 'opacity-75' : ''} group-hover:-translate-y-0.5 group-hover:shadow-md`}>
-                      <CardContent className="p-4 h-full min-h-[77px] flex items-center">
-                        <div className="flex items-start gap-3 w-full">
-                          <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
-                            <div className={`${themeClasses.text} ${service.id === 'dash' ? themeClasses.textSubtle : ''} transition-transform duration-300 group-hover:scale-121`}>
-                              {loadingService === service.id ? (
-                                <Spinner size="sm" />
-                              ) : (
-                                service.icon
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 ${isDark ? 'group-hover:text-[#60a5fa]' : 'group-hover:text-[#3b82f6]'}`}>
-                              {service.name}
-                            </h3>
-                            <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
-                              {loadingService === service.id ? 'Cargando...' : service.desc}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </a>
+                  <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>
+                    {grupo.titulo}
+                  </h2>
+                  <div className={`grid ${grupo.id === 'locales' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                    {grupo.servicios.map((service, index) => (
+                      <div
+                        key={service.id}
+                        className={`animate-fade-in-up stagger-${index + 1}`}
+                      >
+                        <a
+                          href={service.url}
+                          onClick={() => handleServiceClick(service.id)}
+                          className="group block h-full w-full text-left hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
+                          aria-label={`Abrir ${service.name}`}
+                          aria-busy={loadingService === service.id}
+                        >
+                          <Card className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.borderHover} border h-full relative transition-all duration-300 ease-out shadow-sm ${loadingService === service.id ? 'opacity-75' : ''} group-hover:-translate-y-0.5 group-hover:shadow-md`}>
+                            <CardContent className="p-4 h-full min-h-[77px] flex items-center">
+                              <div className="flex items-start gap-3 w-full">
+                                <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
+                                  <div className={`${themeClasses.text} ${service.id === 'dash' ? themeClasses.textSubtle : ''} transition-transform duration-300 group-hover:scale-121`}>
+                                    {loadingService === service.id ? (
+                                      <Spinner size="sm" />
+                                    ) : (
+                                      service.icon
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 ${isDark ? 'group-hover:text-[#60a5fa]' : 'group-hover:text-[#3b82f6]'}`}>
+                                    {service.name}
+                                  </h3>
+                                  <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
+                                    {loadingService === service.id ? 'Cargando...' : service.desc}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </a>
 
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

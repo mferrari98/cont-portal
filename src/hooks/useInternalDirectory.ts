@@ -16,9 +16,32 @@ async function getXlsxModule(): Promise<XLSXModule> {
 }
 
 const DIRECTORY_MAX_ROWS = 800;
+const DIRECTORY_MAX_COLUMNS = 8; // A-H
+const HEADER_SCAN_ROWS = 20;
 const STOP_TOKEN_NORMALIZED = (
   ['telefonos internos reserva', 'reserva 6000'] as const
 ).map(token => cachedNormalizeText(token));
+
+const HEADER_TOKENS = {
+  extension: ['interno', 'internos', 'extension', 'ext', 'anexo', 'telefono', 'telefonos', 'int'],
+  department: ['sector', 'departamento', 'area', 'unidad', 'seccion'],
+  title: ['titulo', 'cargo', 'puesto', 'funcion'],
+  name: ['apellido y nombre', 'apellidos y nombres', 'apellido', 'nombre', 'responsable', 'contacto']
+} as const;
+
+const DEFAULT_COLUMN_INDICES = {
+  extension: 1,
+  department: 2,
+  title: 3,
+  name: 4
+} as const;
+
+type ColumnMap = {
+  extensionIndex: number;
+  departmentIndex: number;
+  titleIndex: number;
+  nameIndex: number;
+};
 
 function buildWorksheetRange(worksheet: XLSX.WorkSheet, xlsx: XLSXModule): string {
   const baseRange = worksheet['!ref']
@@ -28,7 +51,7 @@ function buildWorksheetRange(worksheet: XLSX.WorkSheet, xlsx: XLSXModule): strin
   const normalizedRange = {
     s: { c: 0, r: 0 },
     e: {
-      c: 4,
+      c: Math.min(baseRange.e.c, DIRECTORY_MAX_COLUMNS - 1),
       r: Math.min(baseRange.e.r, DIRECTORY_MAX_ROWS - 1)
     }
   };
@@ -36,12 +59,143 @@ function buildWorksheetRange(worksheet: XLSX.WorkSheet, xlsx: XLSXModule): strin
   return xlsx.utils.encode_range(normalizedRange);
 }
 
-function shouldStopProcessing(...values: string[]): boolean {
+function shouldStopProcessing(values: string[], hasName: boolean, hasNumericExtension: boolean): boolean {
+  if (hasName || hasNumericExtension) return false;
   return values.some(value => {
     if (!value) return false;
     const normalized = cachedNormalizeText(value);
     return normalized.length > 0 && STOP_TOKEN_NORMALIZED.some(token => normalized.includes(token));
   });
+}
+
+function normalizeCellValue(value: string | number | undefined | null): string {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+}
+
+function normalizeExtensionValue(value: string): string {
+  return value.replace(/\.0+$/, '');
+}
+
+function normalizeExtensionSearch(value: string): string {
+  const digitsOnly = value.replace(/[^\d]/g, '');
+  return digitsOnly || value.toLowerCase();
+}
+
+function isNumericExtension(value: string): boolean {
+  const cleaned = value.replace(/\s+/g, '').replace(/\./g, '');
+  return cleaned.length > 0 && /^\d+$/.test(cleaned);
+}
+
+function normalizeApellido(nombre: string): string {
+  if (!nombre) return '';
+  const commaIndex = nombre.indexOf(',');
+  const base = commaIndex >= 0 ? nombre.slice(0, commaIndex) : nombre.split(' ')[0];
+  return cachedNormalizeText(base || nombre);
+}
+
+function computeSearchScore(person: Personnel, normalizedQuery: string, searchTerms: string[]): number {
+  const apellido = normalizeApellido(person.name);
+  if (apellido && normalizedQuery === apellido) return 3;
+
+  const words = person.searchableName.split(' ').filter(Boolean);
+  const startsWithAll = searchTerms.every(term =>
+    words.some(word => word.startsWith(term) || word === term)
+  );
+  if (startsWithAll) return 2;
+
+  const includesAll = searchTerms.every(term => person.searchableName.includes(term));
+  if (includesAll) return 1;
+
+  return 0;
+}
+
+function splitNames(value: string): string[] {
+  return value
+    .split(/\s*\/\s*|\s*;\s*|\s*\|\s*|\r?\n|\s+-\s+/g)
+    .map(name => name.trim())
+    .filter(name => name.length > 0);
+}
+
+function matchesHeaderToken(normalized: string, tokens: readonly string[]): boolean {
+  return tokens.some(token => normalized === token || normalized.includes(token));
+}
+
+function detectHeaderMapping(rawData: (string | number)[][]): { headerRowIndex: number; columnMap: ColumnMap } {
+  const maxRows = Math.min(rawData.length, HEADER_SCAN_ROWS);
+
+  for (let i = 0; i < maxRows; i++) {
+    const row = rawData[i] || [];
+    const map: ColumnMap = {
+      extensionIndex: -1,
+      departmentIndex: -1,
+      titleIndex: -1,
+      nameIndex: -1
+    };
+    let foundExtension = false;
+    let foundDepartment = false;
+    let foundTitle = false;
+    let foundName = false;
+
+    row.forEach((cell, idx) => {
+      const normalized = cachedNormalizeText(normalizeCellValue(cell));
+      if (!normalized) return;
+
+      if (!foundExtension && matchesHeaderToken(normalized, HEADER_TOKENS.extension)) {
+        map.extensionIndex = idx;
+        foundExtension = true;
+      }
+      if (!foundDepartment && matchesHeaderToken(normalized, HEADER_TOKENS.department)) {
+        map.departmentIndex = idx;
+        foundDepartment = true;
+      }
+      if (!foundTitle && matchesHeaderToken(normalized, HEADER_TOKENS.title)) {
+        map.titleIndex = idx;
+        foundTitle = true;
+      }
+      if (!foundName && matchesHeaderToken(normalized, HEADER_TOKENS.name)) {
+        map.nameIndex = idx;
+        foundName = true;
+      }
+    });
+
+    if (foundName && (foundExtension || foundDepartment)) {
+      return { headerRowIndex: i, columnMap: map };
+    }
+  }
+
+  return {
+    headerRowIndex: -1,
+    columnMap: {
+      extensionIndex: DEFAULT_COLUMN_INDICES.extension,
+      departmentIndex: DEFAULT_COLUMN_INDICES.department,
+      titleIndex: DEFAULT_COLUMN_INDICES.title,
+      nameIndex: DEFAULT_COLUMN_INDICES.name
+    }
+  };
+}
+
+function uniqueIndices(indices: number[]): number[] {
+  const seen = new Set<number>();
+  const result: number[] = [];
+
+  indices.forEach(idx => {
+    if (idx < 0 || Number.isNaN(idx)) return;
+    if (seen.has(idx)) return;
+    seen.add(idx);
+    result.push(idx);
+  });
+
+  return result;
+}
+
+function pickCellText(row: (string | number)[], indices: number[]): string {
+  for (const idx of indices) {
+    if (idx < 0 || idx >= row.length) continue;
+    const value = normalizeCellValue(row[idx]);
+    if (value) return value;
+  }
+  return '';
 }
 
 /**
@@ -216,53 +370,67 @@ export function useInternalDirectory(): SearchState & {
     const personnel: Personnel[] = [];
     let id = 1;
     let stopProcessing = false;
+    const { headerRowIndex, columnMap } = detectHeaderMapping(rawData);
+    const dataStartIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
 
-    // Process all rows starting from index 0 (including headers)
-    for (let i = 0; i < rawData.length && !stopProcessing; i++) {
+    // Process rows after header (if detected)
+    for (let i = dataStartIndex; i < rawData.length && !stopProcessing; i++) {
       const row = rawData[i];
 
       // Skip completely empty rows
       if (!row || row.every(cell => !cell || cell === '' || cell === 0)) continue;
 
-      // Get data from columns (B=Extension, C=Department, D=Position/Title, E=Name)
-      const colA = String(row[0] || '').trim(); // Column A
-      const colB = String(row[1] || '').trim(); // Extension (real data in column B)
-      const colC = String(row[2] || '').trim(); // Department/Sector
-      const colD = String(row[3] || '').trim(); // Position/Title
-      const colE = String(row[4] || '').trim(); // Name (real data in column E)
+      const rowValues = row.map(cell => normalizeCellValue(cell));
 
-      // Check for stop condition: TELÉFONOS INTERNOS RESERVA 6000
-      if (shouldStopProcessing(colA, colD)) {
+      // Skip header rows that repeat inside the data
+      const normalizedRow = rowValues.map(value => cachedNormalizeText(value));
+      const headerHasName = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.name));
+      const headerHasExtension = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.extension));
+      const headerHasDepartment = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.department));
+      if (headerHasName && (headerHasExtension || headerHasDepartment)) continue;
+
+      const extensionIndices = uniqueIndices([
+        columnMap.extensionIndex,
+        DEFAULT_COLUMN_INDICES.extension,
+        0
+      ]);
+      const nameIndices = uniqueIndices([
+        columnMap.nameIndex,
+        DEFAULT_COLUMN_INDICES.name,
+        DEFAULT_COLUMN_INDICES.title
+      ]);
+      const departmentIndices = uniqueIndices([
+        columnMap.departmentIndex,
+        DEFAULT_COLUMN_INDICES.department,
+        DEFAULT_COLUMN_INDICES.title
+      ]);
+
+      const extensionRaw = pickCellText(row, extensionIndices);
+      const nameRaw = pickCellText(row, nameIndices);
+      const departmentRaw = pickCellText(row, departmentIndices);
+
+      const extensionValue = extensionRaw ? normalizeExtensionValue(extensionRaw) : '';
+      const hasName = nameRaw.length > 0;
+      const hasExtension = extensionValue.length > 0;
+      const hasNumericExtension = extensionRaw ? isNumericExtension(extensionRaw) : false;
+
+      // Check for stop condition: TELÉFONOS INTERNOS RESERVA 6000 (solo encabezado)
+      if (shouldStopProcessing(rowValues, hasName, hasNumericExtension)) {
         stopProcessing = true;
         break;
       }
 
-      
-      // Skip if this is an empty row or header row
-      if (!colA && !colB && !colC && !colD && !colE) continue;
-
-      // Skip header rows
-      if (colD === 'Título' || colD === 'Sector' || colE === 'Apellido y Nombre') continue;
-
-      // Personnel record - we need either a name or an extension
-      const hasName = colE && colE.trim() !== '';
-      const hasExtension = colB && colB.trim() !== '';
-
       if (hasName || hasExtension) {
-        // Handle multiple names in the same cell separated by " - "
-        const extension = hasExtension ? colB.trim() : 'N/A';
         let names: string[] = [];
 
         if (hasName) {
-          names = colE.split(' - ').map(n => n.trim()).filter(n => n.length > 0);
+          names = splitNames(nameRaw);
         } else {
-          names = [colD || 'Sin Nombre'];
+          names = ['Sin Nombre'];
         }
 
-        // Use Sector (Column D) as the department name
-        const department = colD || 'Sector sin identificar';
+        const department = departmentRaw || 'Sector sin identificar';
 
-        
         // Filter out unwanted content
         const filteredNames = names.filter(name =>
           name &&
@@ -279,9 +447,9 @@ export function useInternalDirectory(): SearchState & {
             id: String(id++),
             name: name,
             department: department,
-            extension: extension,
+            extension: extensionValue || 'N/A',
             searchableName: cachedNormalizeText(name),
-            searchableExtension: extension.toLowerCase()
+            searchableExtension: normalizeExtensionSearch(extensionValue || '')
           };
 
           personnel.push(personnelRecord);
@@ -306,8 +474,21 @@ export function useInternalDirectory(): SearchState & {
     });
 
     return Object.entries(grouped)
-      .map(([department, personnel]) => ({ department, personnel }))
-      .sort((a, b) => a.department.localeCompare(b.department));
+      .map(([department, personnel]) => {
+        const sortedPersonnel = [...personnel].sort((a, b) => {
+          const scoreDiff = (b.searchScore || 0) - (a.searchScore || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.name.localeCompare(b.name);
+        });
+        const maxScore = sortedPersonnel[0]?.searchScore || 0;
+        return { department, personnel: sortedPersonnel, maxScore };
+      })
+      .sort((a, b) => {
+        const scoreDiff = b.maxScore - a.maxScore;
+        if (scoreDiff !== 0) return scoreDiff;
+        return a.department.localeCompare(b.department);
+      })
+      .map(({ department, personnel }) => ({ department, personnel }));
   };
 
   /**
@@ -321,59 +502,64 @@ export function useInternalDirectory(): SearchState & {
 
     const normalizedQuery = cachedNormalizeText(query.trim());
     const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 0);
-    const isNumericQuery = /^\d+$/.test(normalizedQuery);
+    const numericQuery = normalizedQuery.replace(/\s+/g, '');
+    const isNumericQuery = /^\d+$/.test(numericQuery);
 
     let matchingPersonnel: Personnel[] = [];
 
     if (isNumericQuery) {
       // Numeric search: find all people with matching extension
       matchingPersonnel = allPersonnel.filter(person =>
-        person.searchableExtension.includes(normalizedQuery)
+        person.searchableExtension.includes(numericQuery)
       );
     } else {
-      // Check if this is a sector search (query matches a department name)
-      const normalizedDepartmentQuery = cachedNormalizeText(query.trim());
-      const sectorMatches = allPersonnel.filter(person =>
+      const normalizedDepartmentQuery = normalizedQuery;
+      const departmentMatches = allPersonnel.filter(person =>
         cachedNormalizeText(person.department).includes(normalizedDepartmentQuery)
       );
 
-      if (sectorMatches.length > 0 && searchTerms.length === 1) {
-        // Sector search: show all people from this sector
-        const sectorName = sectorMatches[0].department;
-        matchingPersonnel = allPersonnel.filter(person =>
-          person.department === sectorName
-        );
-      } else {
-        // Person name search: find names that start with the search terms
-        const exactMatches = allPersonnel.filter(person => {
-          // Check if all search terms match the beginning of words in the name
-          return searchTerms.every(term => {
-            const personWords = person.searchableName.split(' ');
-
-            // Check if the term matches the start of any word in the person's name
-            return personWords.some(word =>
-              word.startsWith(term) || // Starts with the term
-              word === term // Exact match
-            );
-          });
-        });
-
-        if (exactMatches.length > 0) {
-          // Get all extensions of exact matches
-          const matchingExtensions = new Set(exactMatches.map(p => p.extension));
-
-          // Return all people who share these extensions
-          matchingPersonnel = allPersonnel.filter(person =>
-            matchingExtensions.has(person.extension)
+      const exactMatches = allPersonnel.filter(person => {
+        return searchTerms.every(term => {
+          const personWords = person.searchableName.split(' ');
+          return personWords.some(word =>
+            word.startsWith(term) ||
+            word === term
           );
-        }
+        });
+      });
+
+      const results: Personnel[] = [];
+      const seen = new Set<string>();
+      const addResults = (items: Personnel[]) => {
+        items.forEach(item => {
+          if (seen.has(item.id)) return;
+          seen.add(item.id);
+          results.push(item);
+        });
+      };
+
+      if (exactMatches.length > 0) {
+        const matchingExtensions = new Set(exactMatches.map(p => p.extension));
+        addResults(allPersonnel.filter(person => matchingExtensions.has(person.extension)));
+      } else {
+        const fallbackMatches = allPersonnel.filter(person =>
+          searchTerms.every(term => person.searchableName.includes(term))
+        );
+        addResults(fallbackMatches);
       }
+
+      if (departmentMatches.length > 0 && searchTerms.length === 1) {
+        addResults(departmentMatches);
+      }
+
+      matchingPersonnel = results;
     }
 
     // Store search terms for text highlighting
     return matchingPersonnel.map(person => ({
       ...person,
-      searchTerms: searchTerms
+      searchTerms: searchTerms,
+      searchScore: computeSearchScore(person, normalizedQuery, searchTerms)
     }));
   }, [query, allPersonnel]);
 

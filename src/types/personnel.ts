@@ -9,6 +9,7 @@ export interface Personnel {
   searchableName: string; // Normalized name for search (lowercase)
   searchableExtension: string; // Normalized extension for search (lowercase)
   searchTerms?: string[]; // Terms to highlight in the display
+  searchScore?: number; // Score for prioritizing search results
 }
 
 /**

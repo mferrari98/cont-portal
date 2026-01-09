@@ -13,3 +13,8 @@ Interfaz de usuario moderna y responsive para acceder y gestionar los diferentes
 - **Arquitectura**: Single Page Application (SPA)
 
 La aplicación se ejecuta en el puerto interno 80 del contenedor y es servida a través de Nginx como proxy reverso en producción.
+
+## Directorio interno (internos.xlsx)
+- El buscador del portal carga el archivo `internos.xlsx`.
+- Ubicarlo en `cont-portal/public/internos.xlsx` para que quede disponible en `/internos.xlsx`.
+- En producción, el archivo debe existir en `/usr/share/nginx/html/internos.xlsx` (o hacer rebuild si se reemplaza).
