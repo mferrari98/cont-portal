@@ -49,7 +49,7 @@ const serviciosLocales: Service[] = [
   },
   {
     id: 'empa',
-    name: 'Empa',
+    name: 'Pedidos',
     icon: <ChefHat className="w-6 h-6" />,
     desc: 'Gestión',
     url: '/empa/'
