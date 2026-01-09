@@ -69,7 +69,7 @@ const serviciosExternos: Service[] = [
     name: 'Dashboard Exemys',
     icon: <LayoutDashboard className="w-6 h-6" />,
     desc: 'Panel de control y monitoreo',
-    url: '/dash/'
+    url: 'https://10.10.4.125/'
   }
 ]
 
