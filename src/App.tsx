@@ -25,6 +25,9 @@ interface Service {
   url: string
 }
 
+const THEME_STORAGE_KEY = 'theme'
+const LEGACY_THEME_STORAGE_KEY = 'portal_theme'
+
 const serviciosLocales: Service[] = [
   {
     id: 'guardias',
@@ -80,7 +83,12 @@ function App() {
   const [showSearchDialog, setShowSearchDialog] = useState(false)
 
   useEffect(() => {
-    const savedTheme = (localStorage.getItem('portal_theme') as 'light' | 'dark') || 'dark'
+    const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as 'light' | 'dark')
+      || (localStorage.getItem(LEGACY_THEME_STORAGE_KEY) as 'light' | 'dark')
+      || 'dark'
+
+    localStorage.setItem(THEME_STORAGE_KEY, savedTheme)
+    localStorage.setItem(LEGACY_THEME_STORAGE_KEY, savedTheme)
 
     // Apply theme immediately to prevent any color flashing
     if (savedTheme === 'dark') {
@@ -116,7 +124,7 @@ function App() {
 
     // También escuchar cambios en storage (de otras pestañas/aplicaciones)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'portal_theme' && e.newValue) {
+      if ((e.key === THEME_STORAGE_KEY || e.key === LEGACY_THEME_STORAGE_KEY) && e.newValue) {
         setTheme(e.newValue as 'light' | 'dark')
       }
     }
@@ -158,7 +166,8 @@ function App() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
-    localStorage.setItem('portal_theme', newTheme)
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme)
+    localStorage.setItem(LEGACY_THEME_STORAGE_KEY, newTheme)
     // Disparar evento para sincronizar otras pestañas/aplicaciones (ej: emp app)
     window.dispatchEvent(new CustomEvent('themeChanged', {
       detail: { theme: newTheme }
