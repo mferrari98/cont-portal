@@ -1,20 +1,12 @@
 # Portal de Servicios
 
-Aplicación web frontend desarrollada en React 19 y TypeScript que sirve como portal principal para los servicios de telecomunicaciones.
+Frontend React + TypeScript (Vite) servido por Nginx en contenedor.
 
-## ¿Qué es?
-Interfaz de usuario moderna y responsive para acceder y gestionar los diferentes servicios del sistema de telecomunicaciones.
+## Configuracion necesaria
+- `public/internos.xlsx` para el buscador (se sirve como `/internos.xlsx`).
 
-## ¿Cómo funciona?
-- **Framework**: React 19.1.1 con TypeScript
-- **Build Tool**: Vite 7.1.7 para desarrollo rápido
-- **Estilos**: Tailwind CSS 4.1.14 con componentes shadcn/ui
-- **Formularios**: React Hook Form con validación Zod
-- **Arquitectura**: Single Page Application (SPA)
-
-La aplicación se ejecuta en el puerto interno 80 del contenedor y es servida a través de Nginx como proxy reverso en producción.
-
-## Directorio interno (internos.xlsx)
-- El buscador del portal carga el archivo `internos.xlsx`.
-- Ubicarlo en `cont-portal/public/internos.xlsx` para que quede disponible en `/internos.xlsx`.
-- En producción, el archivo debe existir en `/usr/share/nginx/html/internos.xlsx` (o hacer rebuild si se reemplaza).
+## Desarrollo
+```bash
+npm install
+npm run dev
+```
