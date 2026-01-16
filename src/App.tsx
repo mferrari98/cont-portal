@@ -13,8 +13,8 @@ import {
   BarChart3,
   LayoutDashboard,
   Map,
-  Monitor,
-  ChefHat
+  Activity,
+  ConciergeBell
 } from "lucide-react"
 
 interface Service {
@@ -46,16 +46,16 @@ const serviciosLocales: Service[] = [
   {
     id: 'monitor',
     name: 'Monitor',
-    icon: <Monitor className="w-6 h-6" />,
-    desc: 'Monitor de recursos del servidor',
+    icon: <Activity className="w-6 h-6" />,
+    desc: 'Monitoreo en tiempo real del servidor',
     url: '/monitor/'
   },
   {
     id: 'empa',
     name: 'Pedidos',
-    icon: <ChefHat className="w-6 h-6" />,
-    desc: 'Gestión',
-    url: '/empa/'
+    icon: <ConciergeBell className="w-6 h-6" />,
+    desc: 'Sistema de gestion',
+    url: '/pedidos/'
   }
 ]
 
@@ -64,8 +64,8 @@ const serviciosExternos: Service[] = [
     id: 'gis',
     name: 'GIS',
     icon: <Map className="w-6 h-6" />,
-    desc: 'Sistema de información geográfica',
-    url: '/gis/'
+    desc: 'Informacion geoespacial de socios',
+    url: 'http://gis.servicoop.com/'
   },
   {
     id: 'dash',

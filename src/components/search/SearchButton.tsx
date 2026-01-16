@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface SearchButtonProps {
@@ -19,12 +19,12 @@ export function SearchButton({ onClick, themeClasses, className = '' }: SearchBu
     <Button
       onClick={onClick}
       variant="outline"
-      size="icon"
-      className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 w-8 hover:cursor-pointer ${className}`}
-      aria-label="Buscar directorio interno"
-      title="Buscar directorio interno"
+      className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 px-3 gap-2 font-semibold hover:cursor-pointer ${className}`}
+      aria-label="Busqueda internos"
+      title="Busqueda internos"
     >
-      <Search className="w-4 h-4" />
+      <BookOpen className="w-4 h-4" />
+      <span>Busqueda internos</span>
     </Button>
   );
 }
