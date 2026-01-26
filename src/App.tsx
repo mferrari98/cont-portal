@@ -6,15 +6,18 @@ import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { SearchButton } from "@/components/search/SearchButton"
 import { SearchDialog } from "@/components/search/SearchDialog"
+import DeudoresPage from "@/pages/Deudores"
 import {
   Moon,
   Sun,
   Shield,
+  ArrowLeft,
   BarChart3,
   LayoutDashboard,
   Map,
   Activity,
-  ConciergeBell
+  ConciergeBell,
+  HandCoins
 } from "lucide-react"
 
 interface Service {
@@ -56,6 +59,13 @@ const serviciosLocales: Service[] = [
     icon: <ConciergeBell className="w-6 h-6" />,
     desc: 'Sistema de gestion',
     url: '/pedidos/'
+  },
+  {
+    id: 'deudores',
+    name: 'Deudores',
+    icon: <HandCoins className="w-6 h-6" />,
+    desc: 'Registro de deudas internas',
+    url: '/deudores/'
   }
 ]
 
@@ -184,6 +194,7 @@ function App() {
     { id: 'locales', titulo: 'Apps locales', servicios: serviciosLocales },
     { id: 'externas', titulo: 'Apps externas', servicios: serviciosExternos }
   ]
+  const isDeudoresPage = window.location.pathname.startsWith('/deudores')
 
   // Los hooks deben ser llamados siempre, antes de cualquier return condicional
   const themeClasses = useThemeClasses(theme)
@@ -209,11 +220,23 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Search Button */}
-              <SearchButton
-                onClick={() => setShowSearchDialog(true)}
-                themeClasses={themeClasses}
-              />
+              {isDeudoresPage ? (
+                <Button
+                  variant="outline"
+                  className={`${themeClasses.bgCard} ${themeClasses.text} border-2 ${themeClasses.border} hover:opacity-80 font-semibold h-8`}
+                  asChild
+                >
+                  <a href="/" className="flex items-center gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver al portal
+                  </a>
+                </Button>
+              ) : (
+                <SearchButton
+                  onClick={() => setShowSearchDialog(true)}
+                  themeClasses={themeClasses}
+                />
+              )}
 
               {/* Theme Toggle */}
               <Button
@@ -229,87 +252,92 @@ function App() {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="py-6 px-4 relative z-10">
-          <div className="max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="mb-6 mt-8">
-              <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} inline-block whitespace-nowrap`}>
-                Portal de Servicios
-              </h1>
-              <p className={`text-base mt-2 ${themeClasses.textSubtle}`}>
-                Centro de Control
-              </p>
-            </div>
+        {isDeudoresPage ? (
+          <DeudoresPage themeClasses={themeClasses} />
+        ) : (
+          <div className="py-6 px-4 relative z-10">
+            <div className="max-w-5xl mx-auto">
+              {/* Header */}
+              <div className="mb-6 mt-8">
+                <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} inline-block whitespace-nowrap`}>
+                  Portal de Servicios
+                </h1>
+                <p className={`text-base mt-2 ${themeClasses.textSubtle}`}>
+                  Centro de Control
+                </p>
+              </div>
 
-            <Separator className="mb-8 opacity-50 animate-fade-in" style={{ animationDelay: '3s' }} />
+              <Separator className="mb-8 opacity-50 animate-fade-in" style={{ animationDelay: '3s' }} />
 
-            {/* Services Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {gruposServicios.map((grupo) => (
-                <div
-                  key={grupo.id}
-                  className={grupo.id === 'locales' ? 'lg:col-span-2' : 'lg:col-span-1'}
-                >
-                  <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>
-                    {grupo.titulo}
-                  </h2>
-                  <div className={`grid ${grupo.id === 'locales' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
-                    {grupo.servicios.map((service, index) => (
-                      <div
-                        key={service.id}
-                        className={`animate-fade-in-up stagger-${index + 1}`}
-                      >
-                        <a
-                          href={service.url}
-                          onClick={() => handleServiceClick(service.id)}
-                          className="group block h-full w-full text-left hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
-                          aria-label={`Abrir ${service.name}`}
-                          aria-busy={loadingService === service.id}
+              {/* Services Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {gruposServicios.map((grupo) => (
+                  <div
+                    key={grupo.id}
+                    className={grupo.id === 'locales' ? 'lg:col-span-2' : 'lg:col-span-1'}
+                  >
+                    <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>
+                      {grupo.titulo}
+                    </h2>
+                    <div className={`grid ${grupo.id === 'locales' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                      {grupo.servicios.map((service, index) => (
+                        <div
+                          key={service.id}
+                          className={`animate-fade-in-up stagger-${index + 1}`}
                         >
-                          <Card className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.borderHover} border h-full relative transition-all duration-300 ease-out shadow-sm ${loadingService === service.id ? 'opacity-75' : ''} group-hover:-translate-y-0.5 group-hover:shadow-md`}>
-                            <CardContent className="p-4 h-full min-h-[77px] flex items-center">
-                              <div className="flex items-start gap-3 w-full">
-                                <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
-                                  <div className={`${themeClasses.text} ${service.id === 'dash' ? themeClasses.textSubtle : ''} transition-transform duration-300 group-hover:scale-121`}>
-                                    {loadingService === service.id ? (
-                                      <Spinner size="sm" />
-                                    ) : (
-                                      service.icon
-                                    )}
+                          <a
+                            href={service.url}
+                            onClick={() => handleServiceClick(service.id)}
+                            className="group block h-full w-full text-left hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring"
+                            aria-label={`Abrir ${service.name}`}
+                            aria-busy={loadingService === service.id}
+                          >
+                            <Card className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.borderHover} border h-full relative transition-all duration-300 ease-out shadow-sm ${loadingService === service.id ? 'opacity-75' : ''} group-hover:shadow-md`}>
+                              <CardContent className="p-4 h-full min-h-[77px] flex items-center">
+                                <div className="flex items-start gap-3 w-full">
+                                  <div className={`w-11 h-11 rounded-md flex items-center justify-center flex-shrink-0 ${themeClasses.iconBg} transition-all duration-300`}>
+                                    <div className={`${themeClasses.text} ${service.id === 'dash' ? themeClasses.textSubtle : ''} transition-transform duration-300 group-hover:scale-121`}>
+                                      {loadingService === service.id ? (
+                                        <Spinner size="sm" />
+                                      ) : (
+                                        service.icon
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 ${isDark ? 'group-hover:text-[#60a5fa]' : 'group-hover:text-[#3b82f6]'}`}>
+                                      {service.name}
+                                    </h3>
+                                    <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
+                                      {loadingService === service.id ? 'Cargando...' : service.desc}
+                                    </p>
                                   </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className={`text-lg font-semibold mb-1.5 ${themeClasses.text} leading-tight break-words transition-colors duration-300 ${isDark ? 'group-hover:text-[#60a5fa]' : 'group-hover:text-[#3b82f6]'}`}>
-                                    {service.name}
-                                  </h3>
-                                  <p className={`text-sm ${themeClasses.textMuted} leading-snug break-words`}>
-                                    {loadingService === service.id ? 'Cargando...' : service.desc}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </a>
+                              </CardContent>
+                            </Card>
+                          </a>
 
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Footer */}
-            <Separator className="mt-8 mb-4 opacity-50 animate-fade-in" style={{ animationDelay: '0.8s' }} />
+              {/* Footer */}
+              <Separator className="mt-8 mb-4 opacity-50 animate-fade-in" style={{ animationDelay: '0.8s' }} />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Search Dialog */}
-        <SearchDialog
-          isOpen={showSearchDialog}
-          onClose={() => setShowSearchDialog(false)}
-          themeClasses={themeClasses}
-        />
+        {!isDeudoresPage && (
+          <SearchDialog
+            isOpen={showSearchDialog}
+            onClose={() => setShowSearchDialog(false)}
+            themeClasses={themeClasses}
+          />
+        )}
       </div>
   )
 }

@@ -12,6 +12,7 @@ dist
 dist.backup
 dist-ssr
 *.local
+data
 
 # Documentation directories
 .serenamemories/

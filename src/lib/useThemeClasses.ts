@@ -39,7 +39,7 @@ export const useThemeClasses = (theme: 'light' | 'dark'): ThemeClasses => {
       borderHover: isDark ? 'hover:border-[#2A2A28]' : 'hover:border-[#CBD5E1]',
       bgHover: isDark ? 'hover:bg-[#1F1E1D]' : 'hover:bg-[#F1F5F9]',
       iconBg: isDark ? 'bg-[#141413]' : 'bg-[#F8FAFC]',
-      inputBg: isDark ? 'bg-[#1F1E1D]' : 'bg-[#FFFFFF]',
+      inputBg: isDark ? 'bg-[#2A2A28]' : 'bg-[#F8FAFC]',
       accent: 'bg-[#3b82f6]',
       badge: isDark ? 'bg-[#3A3A38] text-[#E5E4E0]' : 'bg-[#E8E8E8] text-[#141413]',
       resultBg: isDark ? 'bg-[#2A2A28]' : 'bg-[#F0F0F0]'
