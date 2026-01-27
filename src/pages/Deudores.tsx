@@ -40,7 +40,6 @@ interface DeudoresPageProps {
 
 const DATE_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/
 const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-const MAX_UNLOCK_ATTEMPTS = 5
 
 const getTodayIso = () => {
   const now = new Date()
@@ -115,7 +114,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const [unlockPasscode, setUnlockPasscode] = useState("")
   const [unlockError, setUnlockError] = useState<string | null>(null)
   const [unlocking, setUnlocking] = useState(false)
-  const [unlockAttempts, setUnlockAttempts] = useState(0)
   const [nuevoDialogOpen, setNuevoDialogOpen] = useState(false)
   const [deudaDialogId, setDeudaDialogId] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -136,7 +134,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const selectedDeudor =
     filteredDeudores.find((deudor) => deudor.id === selectedDeudorId) ?? filteredDeudores[0] ?? null
   const selectedDraft = selectedDeudor ? drafts[selectedDeudor.id] ?? emptyDraft() : emptyDraft()
-  const unlockAttemptsLeft = Math.max(0, MAX_UNLOCK_ATTEMPTS - unlockAttempts)
 
   const buildAuthHeaders = useCallback(() => {
     const headers = new Headers({ "Content-Type": "application/json" })
@@ -226,7 +223,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         }
 
         setUnlockError(null)
-        setUnlockAttempts(0)
       } catch (err) {
         if (!isCurrent) {
           return
@@ -239,7 +235,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         setNuevoDialogOpen(false)
         setUnlockDialogOpen(true)
         setUnlockPasscode("")
-        setUnlockAttempts(0)
         setUnlockError("Clave desactualizada. Ingresa la nueva.")
         setError("Edicion bloqueada. Ingresa la clave para continuar.")
       }
@@ -261,7 +256,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     setUnlockDialogOpen(true)
     setUnlockPasscode("")
     setUnlockError("Clave desactualizada. Ingresa la nueva.")
-    setUnlockAttempts(0)
     setError("Edicion bloqueada: clave incorrecta.")
   }
 
@@ -270,7 +264,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     if (!open) {
       setUnlockPasscode("")
       setUnlockError(null)
-      setUnlockAttempts(0)
     }
   }
 
@@ -283,7 +276,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     setUnlockDialogOpen(false)
     setUnlockPasscode("")
     setUnlockError(null)
-    setUnlockAttempts(0)
     setError(null)
   }
 
@@ -333,18 +325,10 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
       persistPasscode(trimmed)
       setUnlockPasscode("")
       setUnlockError(null)
-      setUnlockAttempts(0)
       setUnlockDialogOpen(false)
     } catch (err) {
       console.error(err)
-      const nextAttempts = unlockAttempts + 1
-      const remaining = Math.max(0, MAX_UNLOCK_ATTEMPTS - nextAttempts)
-      setUnlockAttempts(nextAttempts)
-      setUnlockError(
-        remaining > 0
-          ? `Clave incorrecta. Reintentos restantes: ${remaining}.`
-          : "Clave incorrecta. Intenta nuevamente."
-      )
+      setUnlockError("Clave incorrecta. Intenta nuevamente.")
     } finally {
       setUnlocking(false)
     }
@@ -610,7 +594,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                           aria-label="Clave de edicion"
                         />
                         <p className={`text-xs ${themeClasses.textMuted}`}>
-                          Reintentos disponibles: {unlockAttemptsLeft}
+                          Reintentos disponibles: ilimitados
                         </p>
                         {unlockError && (
                           <p className="text-sm text-red-500">{unlockError}</p>
