@@ -593,9 +593,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                           placeholder="Clave de edicion"
                           aria-label="Clave de edicion"
                         />
-                        <p className={`text-xs ${themeClasses.textMuted}`}>
-                          Reintentos disponibles: ilimitados
-                        </p>
                         {unlockError && (
                           <p className="text-sm text-red-500">{unlockError}</p>
                         )}
