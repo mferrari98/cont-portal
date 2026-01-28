@@ -24,9 +24,9 @@ export default defineConfig({
           // Separate UI components library
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-separator', '@radix-ui/react-slot'],
           // Separate Excel processing library (larger dependency)
-          excel: ['xlsx'],
+          excel: ['read-excel-file'],
           // Separate React Hook Form related
-          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          forms: ['react-hook-form'],
         },
       },
     },

@@ -1,18 +1,19 @@
 import { useState, useMemo, useCallback } from 'react';
-import type * as XLSX from 'xlsx';
 import { cachedNormalizeText } from '@/lib/normalize';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
 
-type XLSXModule = typeof import('xlsx');
+type ReadXlsxFileModule = typeof import('read-excel-file');
+type ReadXlsxFile = ReadXlsxFileModule['default'];
+type CellValue = string | number | boolean | Date | null | undefined;
 
-let xlsxModule: XLSXModule | null = null;
+let readXlsxFileModule: ReadXlsxFileModule | null = null;
 
-async function getXlsxModule(): Promise<XLSXModule> {
-  if (!xlsxModule) {
-    xlsxModule = await import('xlsx');
+async function getReadXlsxFile(): Promise<ReadXlsxFile> {
+  if (!readXlsxFileModule) {
+    readXlsxFileModule = await import('read-excel-file');
   }
 
-  return xlsxModule;
+  return readXlsxFileModule.default;
 }
 
 const DIRECTORY_MAX_ROWS = 800;
@@ -43,20 +44,10 @@ type ColumnMap = {
   nameIndex: number;
 };
 
-function buildWorksheetRange(worksheet: XLSX.WorkSheet, xlsx: XLSXModule): string {
-  const baseRange = worksheet['!ref']
-    ? xlsx.utils.decode_range(worksheet['!ref'])
-    : xlsx.utils.decode_range(`A1:E${DIRECTORY_MAX_ROWS}`);
-
-  const normalizedRange = {
-    s: { c: 0, r: 0 },
-    e: {
-      c: Math.min(baseRange.e.c, DIRECTORY_MAX_COLUMNS - 1),
-      r: Math.min(baseRange.e.r, DIRECTORY_MAX_ROWS - 1)
-    }
-  };
-
-  return xlsx.utils.encode_range(normalizedRange);
+function clampRows(rows: CellValue[][]): CellValue[][] {
+  return rows
+    .slice(0, DIRECTORY_MAX_ROWS)
+    .map(row => row.slice(0, DIRECTORY_MAX_COLUMNS));
 }
 
 function shouldStopProcessing(values: string[], hasName: boolean, hasNumericExtension: boolean): boolean {
@@ -68,7 +59,7 @@ function shouldStopProcessing(values: string[], hasName: boolean, hasNumericExte
   });
 }
 
-function normalizeCellValue(value: string | number | undefined | null): string {
+function normalizeCellValue(value: CellValue): string {
   if (value === undefined || value === null) return '';
   return String(value).trim();
 }
@@ -121,7 +112,7 @@ function matchesHeaderToken(normalized: string, tokens: readonly string[]): bool
   return tokens.some(token => normalized === token || normalized.includes(token));
 }
 
-function detectHeaderMapping(rawData: (string | number)[][]): { headerRowIndex: number; columnMap: ColumnMap } {
+function detectHeaderMapping(rawData: CellValue[][]): { headerRowIndex: number; columnMap: ColumnMap } {
   const maxRows = Math.min(rawData.length, HEADER_SCAN_ROWS);
 
   for (let i = 0; i < maxRows; i++) {
@@ -189,7 +180,7 @@ function uniqueIndices(indices: number[]): number[] {
   return result;
 }
 
-function pickCellText(row: (string | number)[], indices: number[]): string {
+function pickCellText(row: CellValue[], indices: number[]): string {
   for (const idx of indices) {
     if (idx < 0 || idx >= row.length) continue;
     const value = normalizeCellValue(row[idx]);
@@ -317,29 +308,9 @@ export function useInternalDirectory(): SearchState & {
         throw new Error('El archivo del directorio no está disponible');
       }
 
-      const XLSX = await getXlsxModule();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
-
-      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        throw new Error('El archivo Excel no tiene hojas de cálculo');
-      }
-
-      // Get first worksheet
-      const worksheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[worksheetName];
-
-      if (!worksheet) {
-        throw new Error(`No se encontró la hoja "${worksheetName}"`);
-      }
-
-      // Convert to JSON with raw values - more efficient
-      const worksheetRange = buildWorksheetRange(worksheet, XLSX);
-      const rawData = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        defval: '',
-        blankrows: false,
-        range: worksheetRange
-      }) as (string | number)[][];
+      const readXlsxFile = await getReadXlsxFile();
+      const rawRows = await readXlsxFile(arrayBuffer);
+      const rawData = clampRows(rawRows as CellValue[][]);
 
       if (!rawData || rawData.length === 0) {
         throw new Error('No se encontraron datos en el archivo Excel');
@@ -366,7 +337,7 @@ export function useInternalDirectory(): SearchState & {
    * Process raw Excel data into Personnel records
    * Enhanced processing for better data extraction
    */
-  const processExcelData = (rawData: (string | number)[][]): Personnel[] => {
+  const processExcelData = (rawData: CellValue[][]): Personnel[] => {
     const personnel: Personnel[] = [];
     let id = 1;
     let stopProcessing = false;
