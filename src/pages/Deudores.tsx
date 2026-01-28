@@ -97,6 +97,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const [loading, setLoading] = useState(true)
   const [savingDebtor, setSavingDebtor] = useState(false)
   const [savingDebtId, setSavingDebtId] = useState<number | null>(null)
+  const [savingEditId, setSavingEditId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [passcode, setPasscode] = useState(() => {
     if (typeof window === "undefined") {
@@ -116,6 +117,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const [unlocking, setUnlocking] = useState(false)
   const [nuevoDialogOpen, setNuevoDialogOpen] = useState(false)
   const [deudaDialogId, setDeudaDialogId] = useState<number | null>(null)
+  const [editDebt, setEditDebt] = useState<{ deudorId: number; deudaId: number } | null>(null)
+  const [editDraft, setEditDraft] = useState<DeudaDraft>(emptyDraft())
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDeudorId, setSelectedDeudorId] = useState<number | null>(null)
 
@@ -130,6 +133,27 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     }
     return deudores.filter((deudor) => deudor.nombre.toLowerCase().includes(normalized))
   }, [deudores, searchTerm])
+
+  const debtCountStats = useMemo(() => {
+    const counts = deudores.map((deudor) => deudor.deudas.length)
+    const uniqueCounts = Array.from(new Set(counts)).sort((a, b) => b - a)
+    const maxCount = uniqueCounts[0] ?? 0
+    const secondCount = uniqueCounts.length > 1 ? uniqueCounts[1] : null
+    return { maxCount, secondCount }
+  }, [deudores])
+
+  const getDebtBadgeClasses = (count: number) => {
+    if (debtCountStats.maxCount === 0) {
+      return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200"
+    }
+    if (count === debtCountStats.maxCount) {
+      return "bg-red-500/20 text-red-700 dark:text-red-300"
+    }
+    if (debtCountStats.secondCount !== null && count === debtCountStats.secondCount) {
+      return "bg-amber-500/20 text-amber-700 dark:text-amber-200"
+    }
+    return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200"
+  }
 
   const selectedDeudor =
     filteredDeudores.find((deudor) => deudor.id === selectedDeudorId) ?? filteredDeudores[0] ?? null
@@ -182,6 +206,12 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     }
   }, [deudaDialogId, selectedDeudorId])
 
+  useEffect(() => {
+    if (editDebt && editDebt.deudorId !== selectedDeudorId) {
+      setEditDebt(null)
+    }
+  }, [editDebt, selectedDeudorId])
+
   const persistPasscode = useCallback((value: string) => {
     if (typeof window === "undefined") {
       return
@@ -229,10 +259,12 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         }
 
         clearPasscode()
-        setIsUnlocked(false)
-        setPasscode("")
-        setDeudaDialogId(null)
-        setNuevoDialogOpen(false)
+    setIsUnlocked(false)
+    setPasscode("")
+    setDeudaDialogId(null)
+    setEditDebt(null)
+    setSavingEditId(null)
+    setNuevoDialogOpen(false)
         setUnlockDialogOpen(true)
         setUnlockPasscode("")
         setUnlockError("Clave desactualizada. Ingresa la nueva.")
@@ -252,6 +284,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     setIsUnlocked(false)
     setPasscode("")
     setDeudaDialogId(null)
+    setEditDebt(null)
+    setSavingEditId(null)
     setNuevoDialogOpen(false)
     setUnlockDialogOpen(true)
     setUnlockPasscode("")
@@ -272,6 +306,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     setIsUnlocked(false)
     setPasscode("")
     setDeudaDialogId(null)
+    setEditDebt(null)
+    setSavingEditId(null)
     setNuevoDialogOpen(false)
     setUnlockDialogOpen(false)
     setUnlockPasscode("")
@@ -295,6 +331,23 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
       setDeudaDialogId(deudorId)
     } else if (deudaDialogId === deudorId) {
       setDeudaDialogId(null)
+    }
+  }
+
+  const handleEditDialogChange = (deudorId: number, deuda: Deuda, open: boolean) => {
+    if (open) {
+      const normalizedDate = normalizeDate(deuda.fecha) ?? getTodayIso()
+      setEditDraft({
+        fecha: normalizedDate,
+        descripcion: deuda.descripcion,
+        debe: deuda.debe
+      })
+      setEditDebt({ deudorId, deudaId: deuda.id })
+      return
+    }
+
+    if (editDebt?.deudaId === deuda.id) {
+      setEditDebt(null)
     }
   }
 
@@ -386,6 +439,13 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     }))
   }
 
+  const handleEditDraftChange = (field: keyof DeudaDraft, value: string) => {
+    setEditDraft((prev) => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
   const handleAgregarDeuda = async (event: FormEvent<HTMLFormElement>, deudorId: number) => {
     event.preventDefault()
     if (!isEditingEnabled) {
@@ -439,6 +499,65 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
       setError("No se pudo guardar la deuda")
     } finally {
       setSavingDebtId(null)
+    }
+  }
+
+  const handleEditarDeuda = async (
+    event: FormEvent<HTMLFormElement>,
+    deudorId: number,
+    deudaId: number
+  ) => {
+    event.preventDefault()
+    if (!isEditingEnabled) {
+      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      return
+    }
+
+    const fechaNormalizada = normalizeDate(editDraft.fecha)
+    const descripcion = editDraft.descripcion.trim()
+    const debe = editDraft.debe.trim()
+
+    if (!fechaNormalizada) {
+      setError("Selecciona una fecha valida.")
+      return
+    }
+
+    if (!descripcion || !debe) {
+      setError("Completa descripcion y debe antes de guardar.")
+      return
+    }
+
+    setSavingEditId(deudaId)
+    setError(null)
+    try {
+      const response = await fetch(`/api/deudores/${deudorId}/deudas/${deudaId}`, {
+        method: "PUT",
+        headers: buildAuthHeaders(),
+        body: JSON.stringify({
+          fecha: fechaNormalizada,
+          descripcion,
+          debe
+        })
+      })
+
+      if (response.status === 401) {
+        handleUnauthorized()
+        return
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error ?? "No se pudo actualizar la deuda")
+      }
+
+      setEditDebt(null)
+      setEditDraft(emptyDraft())
+      await loadDeudores()
+    } catch (err) {
+      console.error(err)
+      setError("No se pudo actualizar la deuda")
+    } finally {
+      setSavingEditId(null)
     }
   }
 
@@ -749,7 +868,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                         </p>
                                       </div>
                                     </div>
-                                    <div className={`text-[11px] font-semibold px-2 py-1 rounded-md ${themeClasses.badge}`}>
+                                    <div className={`text-[11px] font-semibold px-2 py-1 rounded-md ${getDebtBadgeClasses(deudor.deudas.length)}`}>
                                       {deudor.deudas.length}
                                     </div>
                                   </div>
@@ -778,7 +897,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                 </p>
                               </div>
                             </div>
-                            <div className={`text-xs font-semibold px-2 py-1 rounded-md ${themeClasses.badge}`}>
+                            <div className={`text-xs font-semibold px-2 py-1 rounded-md ${getDebtBadgeClasses(selectedDeudor.deudas.length)}`}>
                               {selectedDeudor.deudas.length} items
                             </div>
                           </div>
@@ -893,14 +1012,78 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                         </p>
                                       </div>
                                       {isEditingEnabled && (
-                                        <Button
-                                          variant="default"
-                                          size="sm"
-                                          className="bg-red-500/54 text-white hover:bg-red-500/60 font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                                          onClick={() => handleEliminarDeuda(selectedDeudor.id, deuda)}
-                                        >
-                                          Eliminar
-                                        </Button>
+                                        <>
+                                          <Dialog
+                                            open={editDebt?.deudaId === deuda.id}
+                                            onOpenChange={(open) => handleEditDialogChange(selectedDeudor.id, deuda, open)}
+                                          >
+                                            <DialogTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className={`${outlineButtonClass}`}
+                                                disabled={savingEditId === deuda.id}
+                                              >
+                                                Modificar
+                                              </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className={`${themeClasses.bgCard} ${themeClasses.border} ${themeClasses.text} border`}>
+                                              <DialogHeader>
+                                                <DialogTitle className={themeClasses.text}>Modificar deuda</DialogTitle>
+                                                <DialogDescription className={themeClasses.textMuted}>
+                                                  Actualiza la deuda de {selectedDeudor.nombre}.
+                                                </DialogDescription>
+                                              </DialogHeader>
+                                              <form
+                                                onSubmit={(event) => handleEditarDeuda(event, selectedDeudor.id, deuda.id)}
+                                                className="space-y-4"
+                                              >
+                                                <Input
+                                                  type="date"
+                                                  value={editDraft.fecha}
+                                                  onChange={(event) => handleEditDraftChange("fecha", event.target.value)}
+                                                  className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text}`}
+                                                  aria-label="Fecha de la deuda"
+                                                />
+                                                <Input
+                                                  type="text"
+                                                  value={editDraft.descripcion}
+                                                  onChange={(event) => handleEditDraftChange("descripcion", event.target.value)}
+                                                  className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text}`}
+                                                  placeholder="Descripcion"
+                                                  aria-label="Descripcion de la deuda"
+                                                />
+                                                <Input
+                                                  type="text"
+                                                  value={editDraft.debe}
+                                                  onChange={(event) => handleEditDraftChange("debe", event.target.value)}
+                                                  className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text}`}
+                                                  placeholder="Debe"
+                                                  aria-label="Debe"
+                                                />
+                                                <DialogFooter>
+                                                  <Button
+                                                    type="submit"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className={outlineButtonClass}
+                                                    disabled={savingEditId === deuda.id}
+                                                  >
+                                                    {savingEditId === deuda.id ? "Guardando..." : "Guardar cambios"}
+                                                  </Button>
+                                                </DialogFooter>
+                                              </form>
+                                            </DialogContent>
+                                          </Dialog>
+                                          <Button
+                                            variant="default"
+                                            size="sm"
+                                            className="bg-red-500/54 text-white hover:bg-red-500/60 font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={() => handleEliminarDeuda(selectedDeudor.id, deuda)}
+                                          >
+                                            Eliminar
+                                          </Button>
+                                        </>
                                       )}
                                     </div>
                                   </div>

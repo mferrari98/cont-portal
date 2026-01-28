@@ -11,7 +11,6 @@ import {
   Moon,
   Sun,
   Shield,
-  ArrowLeft,
   BarChart3,
   LayoutDashboard,
   Map,
@@ -223,13 +222,11 @@ function App() {
               {isDeudoresPage ? (
                 <Button
                   variant="outline"
-                  className={`${themeClasses.bgCard} ${themeClasses.text} border-2 ${themeClasses.border} hover:opacity-80 font-semibold h-8`}
+                  className={`border-2 ${themeClasses.border} ${themeClasses.text} rounded-md h-8 px-3 gap-2 font-semibold hover:cursor-pointer`}
                   asChild
+                  aria-label="Volver al portal"
                 >
-                  <a href="/" className="flex items-center gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Volver al portal
-                  </a>
+                  <a href="/">Volver al portal</a>
                 </Button>
               ) : (
                 <SearchButton
@@ -259,7 +256,11 @@ function App() {
             <div className="max-w-5xl mx-auto">
               {/* Header */}
               <div className="mb-6 mt-8">
-                <h1 className={`text-5xl font-bold tracking-tight ${themeClasses.text} inline-block whitespace-nowrap`}>
+                <div className={`text-sm ${themeClasses.textMuted} flex items-center gap-2`}>
+                  <span>Portal</span>
+                  <span>/</span>
+                </div>
+                <h1 className={`text-4xl font-bold tracking-tight ${themeClasses.text} mt-2`}>
                   Portal de Servicios
                 </h1>
                 <p className={`text-base mt-2 ${themeClasses.textSubtle}`}>
@@ -279,7 +280,7 @@ function App() {
                     <h2 className={`text-xl font-semibold ${themeClasses.text} mb-3`}>
                       {grupo.titulo}
                     </h2>
-                    <div className={`grid ${grupo.id === 'locales' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                    <div className={`grid ${grupo.id === 'locales' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-3`}>
                       {grupo.servicios.map((service, index) => (
                         <div
                           key={service.id}

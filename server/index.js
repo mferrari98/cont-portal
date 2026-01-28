@@ -172,6 +172,44 @@ app.post("/api/deudores/:id/deudas", async (req, res) => {
   }
 })
 
+app.put("/api/deudores/:id/deudas/:deudaId", async (req, res) => {
+  try {
+    if (!requirePasscode(req, res)) {
+      return
+    }
+    const deudorId = Number(req.params.id)
+    const deudaId = Number(req.params.deudaId)
+    if (!Number.isInteger(deudorId) || !Number.isInteger(deudaId)) {
+      res.status(400).json({ error: "Parametros invalidos" })
+      return
+    }
+
+    const fecha = String(req.body?.fecha ?? "").trim()
+    const descripcion = String(req.body?.descripcion ?? "").trim()
+    const debe = String(req.body?.debe ?? req.body?.monto ?? "").trim()
+
+    if (!fecha || !descripcion || !debe) {
+      res.status(400).json({ error: "Datos de deuda incompletos" })
+      return
+    }
+
+    const result = await run(
+      "UPDATE deudas SET fecha = ?, descripcion = ?, monto = ? WHERE id = ? AND deudor_id = ?",
+      [fecha, descripcion, debe, deudaId, deudorId]
+    )
+
+    if (!result.changes) {
+      res.status(404).json({ error: "Deuda no encontrada" })
+      return
+    }
+
+    res.status(204).end()
+  } catch (error) {
+    console.error("Error actualizando deuda", error)
+    res.status(500).json({ error: "No se pudo actualizar la deuda" })
+  }
+})
+
 app.delete("/api/deudores/:id", async (req, res) => {
   try {
     if (!requirePasscode(req, res)) {
