@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
-import { HandCoins, Lock, Plus, Trash2, Unlock, User } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { Calendar, Lock, Plus, Trash2, Unlock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -39,6 +39,7 @@ interface DeudoresPageProps {
 }
 
 const DATE_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/
+const SHORT_DATE_PATTERN = /^(\d{2})\/(\d{2})\/(\d{2})$/
 const ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 const getTodayIso = () => {
@@ -55,10 +56,19 @@ const formatDate = (value: string) => {
 
   if (ISO_PATTERN.test(value)) {
     const [year, month, day] = value.split("-")
-    return `${day}/${month}/${year}`
+    return `${day}/${month}/${year.slice(-2)}`
   }
 
   if (DATE_PATTERN.test(value)) {
+    const match = value.match(DATE_PATTERN)
+    if (!match) {
+      return value
+    }
+    const [, day, month, year] = match
+    return `${day}/${month}/${year.slice(-2)}`
+  }
+
+  if (SHORT_DATE_PATTERN.test(value)) {
     return value
   }
 
@@ -81,11 +91,30 @@ const normalizeDate = (value: string) => {
     return `${year}-${month}-${day}`
   }
 
+  const shortMatch = trimmed.match(SHORT_DATE_PATTERN)
+  if (shortMatch) {
+    const [, day, month, year] = shortMatch
+    return `20${year}-${month}-${day}`
+  }
+
   return null
 }
 
+const openNativeDatePicker = (input: HTMLInputElement | null) => {
+  if (!input) {
+    return
+  }
+  const picker = input.showPicker
+  if (typeof picker === "function") {
+    picker.call(input)
+    return
+  }
+  input.focus()
+  input.click()
+}
+
 const emptyDraft = (): DeudaDraft => ({
-  fecha: getTodayIso(),
+  fecha: formatDate(getTodayIso()),
   descripcion: "",
   debe: ""
 })
@@ -121,6 +150,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const [editDraft, setEditDraft] = useState<DeudaDraft>(emptyDraft())
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDeudorId, setSelectedDeudorId] = useState<number | null>(null)
+  const newDateInputRef = useRef<HTMLInputElement>(null)
+  const editDateInputRef = useRef<HTMLInputElement>(null)
 
   const hasDeudores = deudores.length > 0
   const isEditingEnabled = isUnlocked && Boolean(passcode)
@@ -134,30 +165,13 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     return deudores.filter((deudor) => deudor.nombre.toLowerCase().includes(normalized))
   }, [deudores, searchTerm])
 
-  const debtCountStats = useMemo(() => {
-    const counts = deudores.map((deudor) => deudor.deudas.length)
-    const uniqueCounts = Array.from(new Set(counts)).sort((a, b) => b - a)
-    const maxCount = uniqueCounts[0] ?? 0
-    const secondCount = uniqueCounts.length > 1 ? uniqueCounts[1] : null
-    return { maxCount, secondCount }
-  }, [deudores])
-
-  const getDebtBadgeClasses = (count: number) => {
-    if (debtCountStats.maxCount === 0) {
-      return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200"
-    }
-    if (count === debtCountStats.maxCount) {
-      return "bg-red-500/20 text-red-700 dark:text-red-300"
-    }
-    if (debtCountStats.secondCount !== null && count === debtCountStats.secondCount) {
-      return "bg-amber-500/20 text-amber-700 dark:text-amber-200"
-    }
-    return "bg-emerald-500/20 text-emerald-700 dark:text-emerald-200"
-  }
+  const debtBadgeClass = `text-[11px] font-semibold px-2 py-1 rounded-md border ${themeClasses.border} ${themeClasses.badge}`
 
   const selectedDeudor =
     filteredDeudores.find((deudor) => deudor.id === selectedDeudorId) ?? filteredDeudores[0] ?? null
   const selectedDraft = selectedDeudor ? drafts[selectedDeudor.id] ?? emptyDraft() : emptyDraft()
+  const normalizedSelectedDate = normalizeDate(selectedDraft.fecha) ?? ""
+  const normalizedEditDate = normalizeDate(editDraft.fecha) ?? ""
 
   const buildAuthHeaders = useCallback(() => {
     const headers = new Headers({ "Content-Type": "application/json" })
@@ -166,6 +180,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     }
     return headers
   }, [passcode])
+
+  const isAuthError = (response: Response) => response.status === 401 || response.status === 403
 
   const loadDeudores = useCallback(async () => {
     setLoading(true)
@@ -268,7 +284,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         setUnlockDialogOpen(true)
         setUnlockPasscode("")
         setUnlockError("Clave desactualizada. Ingresa la nueva.")
-        setError("Edicion bloqueada. Ingresa la clave para continuar.")
       }
     }
 
@@ -290,7 +305,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
     setUnlockDialogOpen(true)
     setUnlockPasscode("")
     setUnlockError("Clave desactualizada. Ingresa la nueva.")
-    setError("Edicion bloqueada: clave incorrecta.")
   }
 
   const handleUnlockDialogChange = (open: boolean) => {
@@ -337,8 +351,9 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const handleEditDialogChange = (deudorId: number, deuda: Deuda, open: boolean) => {
     if (open) {
       const normalizedDate = normalizeDate(deuda.fecha) ?? getTodayIso()
+      const displayDate = formatDate(normalizedDate)
       setEditDraft({
-        fecha: normalizedDate,
+        fecha: displayDate,
         descripcion: deuda.descripcion,
         debe: deuda.debe
       })
@@ -390,7 +405,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const handleCrearDeudor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!isEditingEnabled) {
-      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      setUnlockDialogOpen(true)
       return
     }
 
@@ -408,7 +423,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         body: JSON.stringify({ nombre })
       })
 
-      if (response.status === 401) {
+      if (isAuthError(response)) {
         handleUnauthorized()
         return
       }
@@ -449,7 +464,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   const handleAgregarDeuda = async (event: FormEvent<HTMLFormElement>, deudorId: number) => {
     event.preventDefault()
     if (!isEditingEnabled) {
-      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      setUnlockDialogOpen(true)
       return
     }
 
@@ -481,7 +496,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         })
       })
 
-      if (response.status === 401) {
+      if (isAuthError(response)) {
         handleUnauthorized()
         return
       }
@@ -509,7 +524,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
   ) => {
     event.preventDefault()
     if (!isEditingEnabled) {
-      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      setUnlockDialogOpen(true)
       return
     }
 
@@ -540,7 +555,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         })
       })
 
-      if (response.status === 401) {
+      if (isAuthError(response)) {
         handleUnauthorized()
         return
       }
@@ -563,7 +578,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
 
   const handleEliminarDeudor = async (deudor: Deudor) => {
     if (!isEditingEnabled) {
-      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      setUnlockDialogOpen(true)
       return
     }
 
@@ -579,7 +594,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         headers: buildAuthHeaders()
       })
 
-      if (response.status === 401) {
+      if (isAuthError(response)) {
         handleUnauthorized()
         return
       }
@@ -597,7 +612,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
 
   const handleEliminarDeuda = async (deudorId: number, deuda: Deuda) => {
     if (!isEditingEnabled) {
-      setError("Edicion bloqueada. Ingresa la clave para continuar.")
+      setUnlockDialogOpen(true)
       return
     }
 
@@ -613,7 +628,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
         headers: buildAuthHeaders()
       })
 
-      if (response.status === 401) {
+      if (isAuthError(response)) {
         handleUnauthorized()
         return
       }
@@ -663,12 +678,12 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                 </div>
                 <div>
                   <h2 className={`text-sm font-semibold ${themeClasses.text}`}>
-                    {isEditingEnabled ? "Edicion habilitada" : "Edicion bloqueada"}
+                    Edicion
                   </h2>
                   <p className={`text-sm ${themeClasses.textMuted}`}>
                     {isEditingEnabled
-                      ? "Puedes agregar deudores y deudas."
-                      : "Ingresa la clave para habilitar la edicion."}
+                      ? "Cambios habilitados."
+                      : "Ingresa la clave para editar."}
                   </p>
                 </div>
               </div>
@@ -778,12 +793,9 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <HandCoins className={`h-5 w-5 ${themeClasses.text}`} />
-                <h2 className={`text-lg font-semibold ${themeClasses.text}`}>
-                  Deudas registradas
-                </h2>
-              </div>
+              <h2 className={`text-lg font-semibold ${themeClasses.text}`}>
+                Deudas registradas
+              </h2>
               {hasDeudores && (
                 <span className={`text-sm ${themeClasses.textMuted}`}>
                   {deudores.length} personas
@@ -868,7 +880,7 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                         </p>
                                       </div>
                                     </div>
-                                    <div className={`text-[11px] font-semibold px-2 py-1 rounded-md ${getDebtBadgeClasses(deudor.deudas.length)}`}>
+                                    <div className={debtBadgeClass}>
                                       {deudor.deudas.length}
                                     </div>
                                   </div>
@@ -897,8 +909,8 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                 </p>
                               </div>
                             </div>
-                            <div className={`text-xs font-semibold px-2 py-1 rounded-md ${getDebtBadgeClasses(selectedDeudor.deudas.length)}`}>
-                              {selectedDeudor.deudas.length} items
+                            <div className={debtBadgeClass}>
+                              {selectedDeudor.deudas.length} {selectedDeudor.deudas.length === 1 ? "item" : "items"}
                             </div>
                           </div>
 
@@ -929,13 +941,41 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                   onSubmit={(event) => handleAgregarDeuda(event, selectedDeudor.id)}
                                   className="space-y-4"
                                 >
-                                  <Input
-                                    type="date"
-                                    value={selectedDraft.fecha}
-                                    onChange={(event) => handleDraftChange(selectedDeudor.id, "fecha", event.target.value)}
-                                    className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text}`}
-                                    aria-label="Fecha de la deuda"
-                                  />
+                                  <div className="relative">
+                                    <Input
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="\d{2}/\d{2}/\d{2}"
+                                      maxLength={8}
+                                      value={selectedDraft.fecha}
+                                      onChange={(event) => handleDraftChange(selectedDeudor.id, "fecha", event.target.value)}
+                                      className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text} pr-10`}
+                                      placeholder="dd/mm/aa"
+                                      aria-label="Fecha de la deuda en formato dd/mm/aa"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => openNativeDatePicker(newDateInputRef.current)}
+                                      className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 ${themeClasses.bgHover} ${themeClasses.textMuted}`}
+                                      aria-label="Abrir calendario"
+                                    >
+                                      <Calendar className="h-4 w-4" />
+                                    </button>
+                                    <input
+                                      ref={newDateInputRef}
+                                      type="date"
+                                      value={normalizedSelectedDate}
+                                      onChange={(event) =>
+                                        handleDraftChange(
+                                          selectedDeudor.id,
+                                          "fecha",
+                                          formatDate(event.target.value)
+                                        )
+                                      }
+                                      className="sr-only"
+                                      tabIndex={-1}
+                                    />
+                                  </div>
                                   <Input
                                     type="text"
                                     value={selectedDraft.descripcion}
@@ -977,12 +1017,6 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                               Eliminar deudor
                             </Button>
                           </div>
-
-                          {!isEditingEnabled && (
-                            <p className={`text-sm ${themeClasses.textMuted}`}>
-                              Edicion bloqueada. Ingresa la clave para agregar o eliminar deudas.
-                            </p>
-                          )}
 
                           {selectedDeudor.deudas.length === 0 ? (
                             <p className={`text-sm ${themeClasses.textMuted}`}>
@@ -1038,13 +1072,40 @@ const DeudoresPage = ({ themeClasses }: DeudoresPageProps) => {
                                                 onSubmit={(event) => handleEditarDeuda(event, selectedDeudor.id, deuda.id)}
                                                 className="space-y-4"
                                               >
-                                                <Input
-                                                  type="date"
-                                                  value={editDraft.fecha}
-                                                  onChange={(event) => handleEditDraftChange("fecha", event.target.value)}
-                                                  className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text}`}
-                                                  aria-label="Fecha de la deuda"
-                                                />
+                                                <div className="relative">
+                                                  <Input
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    pattern="\d{2}/\d{2}/\d{2}"
+                                                    maxLength={8}
+                                                    value={editDraft.fecha}
+                                                    onChange={(event) => handleEditDraftChange("fecha", event.target.value)}
+                                                    className={`${themeClasses.inputBg} ${themeClasses.border} ${themeClasses.text} pr-10`}
+                                                    placeholder="dd/mm/aa"
+                                                    aria-label="Fecha de la deuda en formato dd/mm/aa"
+                                                  />
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => openNativeDatePicker(editDateInputRef.current)}
+                                                    className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 ${themeClasses.bgHover} ${themeClasses.textMuted}`}
+                                                    aria-label="Abrir calendario"
+                                                  >
+                                                    <Calendar className="h-4 w-4" />
+                                                  </button>
+                                                  <input
+                                                    ref={editDateInputRef}
+                                                    type="date"
+                                                    value={normalizedEditDate}
+                                                    onChange={(event) =>
+                                                      handleEditDraftChange(
+                                                        "fecha",
+                                                        formatDate(event.target.value)
+                                                      )
+                                                    }
+                                                    className="sr-only"
+                                                    tabIndex={-1}
+                                                  />
+                                                </div>
                                                 <Input
                                                   type="text"
                                                   value={editDraft.descripcion}

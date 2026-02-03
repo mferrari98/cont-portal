@@ -370,7 +370,7 @@ const refreshInternosCache = async ({ force = false } = {}) => {
 const requirePasscode = (req, res) => {
   const provided = String(req.header("x-deudores-passcode") ?? "").trim()
   if (!provided || provided !== editPasscode) {
-    res.status(401).json({ error: "Clave incorrecta" })
+    res.status(403).json({ error: "Clave incorrecta" })
     return false
   }
   return true
