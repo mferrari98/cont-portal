@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { cachedNormalizeText } from '@/lib/normalize';
 import type { Personnel, DepartmentGroup, SearchState } from '@/types/personnel';
 
@@ -239,6 +239,109 @@ function transformErrorMessage(error: Error | unknown): { message: string; isRet
   return { message: 'Error al cargar el directorio', isRetryable: false };
 }
 
+function processExcelData(rawData: CellValue[][]): Personnel[] {
+  const personnel: Personnel[] = [];
+  let id = 1;
+  let stopProcessing = false;
+  const { headerRowIndex, columnMap } = detectHeaderMapping(rawData);
+  const dataStartIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+
+  // Process rows after header (if detected)
+  for (let i = dataStartIndex; i < rawData.length && !stopProcessing; i++) {
+    const row = rawData[i];
+
+    // Skip completely empty rows
+    if (!row || row.every(cell => !cell || cell === '' || cell === 0)) continue;
+
+    const rowValues = row.map(cell => normalizeCellValue(cell));
+
+    // Skip header rows that repeat inside the data
+    const normalizedRow = rowValues.map(value => cachedNormalizeText(value));
+    const headerHasName = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.name));
+    const headerHasExtension = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.extension));
+    const headerHasDepartment = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.department));
+    if (headerHasName && (headerHasExtension || headerHasDepartment)) continue;
+
+    const extensionIndices = uniqueIndices([
+      columnMap.extensionIndex,
+      DEFAULT_COLUMN_INDICES.extension,
+      0
+    ]);
+    const nameIndices = uniqueIndices([
+      columnMap.nameIndex,
+      DEFAULT_COLUMN_INDICES.name,
+      DEFAULT_COLUMN_INDICES.title
+    ]);
+    const departmentIndices = uniqueIndices([
+      columnMap.departmentIndex,
+      DEFAULT_COLUMN_INDICES.department,
+      DEFAULT_COLUMN_INDICES.title
+    ]);
+
+    const extensionRaw = pickCellText(row, extensionIndices);
+    const nameRaw = pickCellText(row, nameIndices);
+    const departmentRaw = pickCellText(row, departmentIndices);
+
+    const extensionValue = extensionRaw ? normalizeExtensionValue(extensionRaw) : '';
+    const hasName = nameRaw.length > 0;
+    const hasExtension = extensionValue.length > 0;
+    const hasNumericExtension = extensionRaw ? isNumericExtension(extensionRaw) : false;
+
+    // Check for stop condition: TELEFONOS INTERNOS RESERVA 6000 (solo encabezado)
+    if (shouldStopProcessing(rowValues, hasName, hasNumericExtension)) {
+      stopProcessing = true;
+      break;
+    }
+
+    if (hasName || hasExtension) {
+      let names: string[] = [];
+
+      if (hasName) {
+        names = splitNames(nameRaw);
+      } else {
+        names = ['Sin Nombre'];
+      }
+
+      const department = departmentRaw || 'Sector sin identificar';
+
+      // Filter out unwanted content
+      const filteredNames = names.filter(name =>
+        name &&
+        !name.toLowerCase().includes('acalandra@servicoop.com') &&
+        !name.toLowerCase().includes('sector comunicaciones al interno') &&
+        name.trim().length > 0
+      );
+
+      if (filteredNames.length === 0) continue;
+
+      // Create personnel records for each name in the cell
+      filteredNames.forEach(name => {
+        const personnelRecord: Personnel = {
+          id: String(id++),
+          name: name,
+          department: department,
+          extension: extensionValue || 'N/A',
+          searchableName: cachedNormalizeText(name),
+          searchableExtension: normalizeExtensionSearch(extensionValue || '')
+        };
+
+        personnel.push(personnelRecord);
+      });
+    }
+  }
+
+  return personnel;
+}
+
+type DirectoryWorkerRequest = {
+  requestId: number;
+  blob: Blob;
+};
+
+type DirectoryWorkerResponse =
+  | { requestId: number; type: 'success'; personnel: Personnel[] }
+  | { requestId: number; type: 'error'; message: string };
+
 /**
  * Hook for managing internal directory data and search functionality
  * Loads and processes Excel data, provides search capabilities with department grouping
@@ -256,6 +359,111 @@ export function useInternalDirectory(): SearchState & {
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
   const [isRetryableError, setIsRetryableError] = useState<boolean>(true);
+  const workerRef = useRef<Worker | null>(null);
+  const workerRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const getWorker = useCallback(() => {
+    if (workerRef.current) return workerRef.current;
+    try {
+      workerRef.current = new Worker(
+        new URL('../workers/internalDirectory.worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+    } catch (error) {
+      return null;
+    }
+    return workerRef.current;
+  }, []);
+
+  const parseInWorker = useCallback((blob: Blob) => {
+    const worker = getWorker();
+    if (!worker) {
+      return Promise.reject(new Error('worker_unavailable'));
+    }
+
+    return new Promise<Personnel[]>((resolve, reject) => {
+      const requestId = workerRequestIdRef.current + 1;
+      workerRequestIdRef.current = requestId;
+
+      const cleanup = () => {
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+      };
+
+      const handleMessage = (event: MessageEvent<DirectoryWorkerResponse>) => {
+        if (!event.data || event.data.requestId !== requestId) return;
+        cleanup();
+        if (event.data.type === 'success') {
+          resolve(event.data.personnel);
+          return;
+        }
+        reject(new Error(event.data.message));
+      };
+
+      const handleError = (event: ErrorEvent) => {
+        cleanup();
+        reject(event.error ?? new Error(event.message));
+      };
+
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
+
+      const payload: DirectoryWorkerRequest = { requestId, blob };
+      worker.postMessage(payload);
+    });
+  }, [getWorker]);
+
+  const parseInMainThread = useCallback(async (blob: Blob) => {
+    const readXlsxFile = await getReadXlsxFile();
+    const rawRows = await readXlsxFile(blob);
+    const rawData = clampRows(rawRows as CellValue[][]);
+
+    if (!rawData || rawData.length === 0) {
+      throw new Error('No se encontraron datos en el archivo Excel');
+    }
+
+    return processExcelData(rawData);
+  }, []);
+
+  const parseDirectory = useCallback(async (blob: Blob) => {
+    if (typeof Worker === 'undefined') {
+      return parseInMainThread(blob);
+    }
+
+    try {
+      return await parseInWorker(blob);
+    } catch (error) {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      try {
+        return await parseInMainThread(blob);
+      } catch (mainError) {
+        throw mainError;
+      }
+    }
+  }, [parseInMainThread, parseInWorker]);
+
+  const loadFromApi = useCallback(async () => {
+    const response = await fetch('/api/internos');
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: No se pudo cargar el directorio interno`);
+    }
+
+    const payload = await response.json();
+    if (!payload || !Array.isArray(payload.personnel)) {
+      throw new Error('Respuesta invalida del directorio');
+    }
+
+    return payload.personnel as Personnel[];
+  }, []);
 
   // Load Excel data on demand (when first opened)
   const loadData = useCallback(async () => {
@@ -272,52 +480,61 @@ export function useInternalDirectory(): SearchState & {
       setIsRetryableError(true); // Reset retryable state for new attempts
       setDataLoaded(false); // Reset loaded state for fresh attempt
 
-      // Fetch Excel file
-      const response = await fetch('/internos.xlsx');
+      const allowClientFallback = import.meta.env.VITE_INTERNALS_CLIENT_FALLBACK === 'true';
+      let processedData: Personnel[] | null = null;
 
-      // Check if response is successful
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: No se pudo cargar el directorio interno`);
+      try {
+        processedData = await loadFromApi();
+      } catch (apiError) {
+        if (!allowClientFallback) {
+          throw apiError;
+        }
       }
 
-      // Check content type to ensure it's an Excel file, not HTML error page
-      const contentType = response.headers.get('content-type');
+      if (!processedData && allowClientFallback) {
+        // Fetch Excel file
+        const response = await fetch('/internos.xlsx');
 
-      // More flexible content-type checking
-      if (contentType && contentType.includes('text/html')) {
-        // If it's HTML, it's likely an error page
-        throw new Error('El archivo del directorio no está disponible');
+        // Check if response is successful
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: No se pudo cargar el directorio interno`);
+        }
+
+        // Check content type to ensure it's an Excel file, not HTML error page
+        const contentType = response.headers.get('content-type');
+
+        // More flexible content-type checking
+        if (contentType && contentType.includes('text/html')) {
+          // If it's HTML, it's likely an error page
+          throw new Error('El archivo del directorio no está disponible');
+        }
+
+        const blob = await response.blob();
+
+        if (blob.size === 0) {
+          throw new Error('El archivo Excel está vacío');
+        }
+
+        // Additional validation: Check if the file looks like HTML error page
+        const headerBuffer = await blob.slice(0, 200).arrayBuffer();
+        const textContent = new TextDecoder('utf-8', { fatal: false }).decode(headerBuffer);
+
+        if (textContent.includes('<!DOCTYPE html>') ||
+            textContent.includes('<html') ||
+            textContent.includes('<HTML') ||
+            textContent.includes('404') ||
+            textContent.includes('Not Found') ||
+            textContent.includes('Cannot GET') ||
+            textContent.includes('<head>')) {
+          throw new Error('El archivo del directorio no está disponible');
+        }
+
+        processedData = await parseDirectory(blob);
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error('El archivo Excel está vacío');
+      if (!processedData) {
+        throw new Error('Directorio interno no disponible');
       }
-
-      // Additional validation: Check if the file looks like HTML error page
-      const textContent = new TextDecoder('utf-8', { fatal: false }).decode(arrayBuffer.slice(0, 200));
-
-      if (textContent.includes('<!DOCTYPE html>') ||
-          textContent.includes('<html') ||
-          textContent.includes('<HTML') ||
-          textContent.includes('404') ||
-          textContent.includes('Not Found') ||
-          textContent.includes('Cannot GET') ||
-          textContent.includes('<head>')) {
-        throw new Error('El archivo del directorio no está disponible');
-      }
-
-      const readXlsxFile = await getReadXlsxFile();
-      const rawRows = await readXlsxFile(arrayBuffer);
-      const rawData = clampRows(rawRows as CellValue[][]);
-
-      if (!rawData || rawData.length === 0) {
-        throw new Error('No se encontraron datos en el archivo Excel');
-      }
-
-      // Process data into Personnel interface
-      const processedData = processExcelData(rawData);
 
       setAllPersonnel(processedData);
       setDataLoaded(true);
@@ -330,107 +547,9 @@ export function useInternalDirectory(): SearchState & {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, dataLoaded, error, isRetryableError]);
+  }, [isLoading, dataLoaded, error, isRetryableError, parseDirectory, loadFromApi]);
 
   
-  /**
-   * Process raw Excel data into Personnel records
-   * Enhanced processing for better data extraction
-   */
-  const processExcelData = (rawData: CellValue[][]): Personnel[] => {
-    const personnel: Personnel[] = [];
-    let id = 1;
-    let stopProcessing = false;
-    const { headerRowIndex, columnMap } = detectHeaderMapping(rawData);
-    const dataStartIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
-
-    // Process rows after header (if detected)
-    for (let i = dataStartIndex; i < rawData.length && !stopProcessing; i++) {
-      const row = rawData[i];
-
-      // Skip completely empty rows
-      if (!row || row.every(cell => !cell || cell === '' || cell === 0)) continue;
-
-      const rowValues = row.map(cell => normalizeCellValue(cell));
-
-      // Skip header rows that repeat inside the data
-      const normalizedRow = rowValues.map(value => cachedNormalizeText(value));
-      const headerHasName = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.name));
-      const headerHasExtension = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.extension));
-      const headerHasDepartment = normalizedRow.some(value => matchesHeaderToken(value, HEADER_TOKENS.department));
-      if (headerHasName && (headerHasExtension || headerHasDepartment)) continue;
-
-      const extensionIndices = uniqueIndices([
-        columnMap.extensionIndex,
-        DEFAULT_COLUMN_INDICES.extension,
-        0
-      ]);
-      const nameIndices = uniqueIndices([
-        columnMap.nameIndex,
-        DEFAULT_COLUMN_INDICES.name,
-        DEFAULT_COLUMN_INDICES.title
-      ]);
-      const departmentIndices = uniqueIndices([
-        columnMap.departmentIndex,
-        DEFAULT_COLUMN_INDICES.department,
-        DEFAULT_COLUMN_INDICES.title
-      ]);
-
-      const extensionRaw = pickCellText(row, extensionIndices);
-      const nameRaw = pickCellText(row, nameIndices);
-      const departmentRaw = pickCellText(row, departmentIndices);
-
-      const extensionValue = extensionRaw ? normalizeExtensionValue(extensionRaw) : '';
-      const hasName = nameRaw.length > 0;
-      const hasExtension = extensionValue.length > 0;
-      const hasNumericExtension = extensionRaw ? isNumericExtension(extensionRaw) : false;
-
-      // Check for stop condition: TELÉFONOS INTERNOS RESERVA 6000 (solo encabezado)
-      if (shouldStopProcessing(rowValues, hasName, hasNumericExtension)) {
-        stopProcessing = true;
-        break;
-      }
-
-      if (hasName || hasExtension) {
-        let names: string[] = [];
-
-        if (hasName) {
-          names = splitNames(nameRaw);
-        } else {
-          names = ['Sin Nombre'];
-        }
-
-        const department = departmentRaw || 'Sector sin identificar';
-
-        // Filter out unwanted content
-        const filteredNames = names.filter(name =>
-          name &&
-          !name.toLowerCase().includes('acalandra@servicoop.com') &&
-          !name.toLowerCase().includes('sector comunicaciones al interno') &&
-          name.trim().length > 0
-        );
-
-        if (filteredNames.length === 0) continue;
-
-        // Create personnel records for each name in the cell
-        filteredNames.forEach(name => {
-          const personnelRecord: Personnel = {
-            id: String(id++),
-            name: name,
-            department: department,
-            extension: extensionValue || 'N/A',
-            searchableName: cachedNormalizeText(name),
-            searchableExtension: normalizeExtensionSearch(extensionValue || '')
-          };
-
-          personnel.push(personnelRecord);
-        });
-      }
-    }
-
-        return personnel;
-  };
-
   /**
    * Group search results by department for better organization
    */
