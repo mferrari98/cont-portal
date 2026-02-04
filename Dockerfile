@@ -4,6 +4,7 @@ WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        ca-certificates \
         python3 \
         make \
         g++ \
@@ -21,6 +22,7 @@ WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        ca-certificates \
         python3 \
         make \
         g++ \
@@ -35,6 +37,11 @@ RUN npm_config_build_from_source=true npm ci --omit=dev \
 FROM node:20-slim
 
 WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 
